@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 21 August 2021                                           Fastly
+Expires: 1 October 2021                                           Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                        17 February 2021
+                                                           30 March 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 August 2021.
+   This Internet-Draft will expire on 1 October 2021.
 
 Copyright Notice
 
@@ -113,6 +113,8 @@ Table of Contents
      A.2.  Application-layer
        A.2.1.  HTTP/2 CERTIFICATE Frames
    Appendix B.  Acknowledgements
+   Appendix C.  Change Log
+     C.1.  Since draft-ietf-tls-esni-09
    Authors' Addresses
 
 1.  Introduction
@@ -279,7 +281,7 @@ Table of Contents
 
 4.  Encrypted ClientHello Configuration
 
-   ECH uses draft-07 of HPKE for public key encryption
+   ECH uses draft-08 of HPKE for public key encryption
    [I-D.irtf-cfrg-hpke].  The ECH configuration is defined by the
    following "ECHConfig" structure.
 
@@ -294,7 +296,7 @@ Table of Contents
        } HpkeSymmetricCipherSuite;
 
        struct {
-           opaque config_id<0..255>;
+           uint8 config_id;
            HpkeKemId kem_id;
            HpkePublicKey public_key;
            HpkeSymmetricCipherSuite cipher_suites<4..2^16-4>;
@@ -302,8 +304,8 @@ Table of Contents
 
        struct {
            HpkeKeyConfig key_config;
-           uint16 maximum_name_length;
-           opaque public_name<1..2^16-1>;
+           uint8 maximum_name_length;
+           opaque public_name<1..255>;
            Extension extensions<0..2^16-1>;
        } ECHConfigContents;
 
@@ -311,7 +313,7 @@ Table of Contents
            uint16 version;
            uint16 length;
            select (ECHConfig.version) {
-             case 0xfe09: ECHConfigContents contents;
+             case 0xfe0a: ECHConfigContents contents;
            }
        } ECHConfig;
 
@@ -333,9 +335,12 @@ Table of Contents
    key_config  A "HpkeKeyConfig" structure carrying the configuration
       information associated with the HPKE public key.  Note that this
       structure contains the "config_id" field, which applies to the
-      entire ECHConfigContents.  Sites MUST NOT publish two
-      differet"ECHConfigContents" values with the same "HpkeKeyConfig"
-      value.
+      entire ECHConfigContents.  Sites MUST NOT publish two different
+      "ECHConfigContents" values with the same "HpkeKeyConfig" value.
+      The RECOMMENDED technique for choosing "config_id" is to choose a
+      random byte.  This process is repeated if this config_id matches
+      that of any valid ECHConfig, which could include any ECHConfig
+      that has been recently removed from active use.
 
    maximum_name_length  The longest name of a backend server, if known.
       If this value is not known it can be set to zero, in which case
@@ -354,9 +359,9 @@ Table of Contents
 
    The "HpkeKeyConfig" structure contains the following fields:
 
-   config_id  An opaque identifier for the given HPKE key configuration.
-      This is used by clients to indicate the key used for ClientHello
-      encryption.
+   config_id  A one-byte identifier for the given HPKE key
+      configuration.  This is used by clients to indicate the key used
+      for ClientHello encryption.
 
    kem_id  The HPKE KEM identifier corresponding to "public_key".
       Clients MUST ignore any "ECHConfig" structure with a key using a
@@ -371,9 +376,9 @@ Table of Contents
    The client-facing server advertises a sequence of ECH configurations
    to clients, serialized as follows.
 
-       ECHConfig ECHConfigs<1..2^16-1>;
+       ECHConfig ECHConfigList<1..2^16-1>;
 
-   The "ECHConfigs" structure contains one or more "ECHConfig"
+   The "ECHConfigList" structure contains one or more "ECHConfig"
    structures in decreasing order of preference.  This allows a server
    to support multiple versions of ECH and multiple sets of ECH
    parameters.
@@ -402,7 +407,7 @@ Table of Contents
    "encrypted_client_hello" extension, defined as follows:
 
        enum {
-          encrypted_client_hello(0xfe09), (65535)
+          encrypted_client_hello(0xfe0a), (65535)
        } ExtensionType;
 
    When offered by the client, the extension appears only in the
@@ -410,7 +415,7 @@ Table of Contents
 
        struct {
           HpkeSymmetricCipherSuite cipher_suite;
-          opaque config_id<0..255>;
+          uint8 config_id;
           opaque enc<1..2^16-1>;
           opaque payload<1..2^16-1>;
        } ClientECH;
@@ -433,10 +438,10 @@ Table of Contents
    EncryptedExtensions message with the following payload:
 
        struct {
-          ECHConfigs retry_configs;
+          ECHConfigList retry_configs;
        } ServerECH;
 
-   retry_configs  An ECHConfigs structure containing one or more
+   retry_configs  An ECHConfigList structure containing one or more
       ECHConfig structures, in decreasing order of preference, to be
       used by the client in subsequent connection attempts.  These are
       known as the server's "retry configurations".
@@ -492,6 +497,20 @@ Table of Contents
    ClientHelloInner.  It MUST NOT be sent in either ClientHelloOuter or
    ClientHelloInner.
 
+   Note that it is possible to implement decoding of the
+   EncodedClientHelloInner in a way that creates a denial-of-service
+   vulnerability.  Specifically, the server needs to check that each
+   extension in the OuterExtensions list appears in the
+   ClientHelloOuter.  The naive strategy would require O(N*M) time,
+   where N is the number of extensions in the ClientHelloOuter and M is
+   the number of extensions in the OuterExtensions list.  Malicious
+   clients could exploit this behavior in order to cause excessive work
+   for the server, possibly making it unavailable.  This problem can be
+   mitigated by representing OuterExtensions in a way that allows it to
+   be searched more quickly.  For example, the runtime can be improved
+   to O(N*log(M)) by sorting the OuterExtensions and using binary search
+   to access it.
+
 5.2.  Authenticating the ClientHelloOuter
 
    To prevent a network attacker from modifying the reconstructed
@@ -502,7 +521,7 @@ Table of Contents
 
       struct {
          HpkeSymmetricCipherSuite cipher_suite;
-         opaque config_id<0..255>;
+         uint8 config_id;
          opaque enc<1..2^16-1>;
          opaque outer_hello<1..2^24-1>;
       } ClientHelloOuterAAD;
@@ -533,14 +552,14 @@ Table of Contents
 
 6.1.  Offering ECH
 
-   To offer ECH, the client first chooses a suitable ECH configuration.
-   To determine if a given "ECHConfig" is suitable, it checks that it
-   supports the KEM algorithm identified by "ECHConfig.contents.kem_id",
-   at least one KDF/AEAD algorithm identified by
-   "ECHConfig.contents.cipher_suites", and the version of ECH indicated
-   by "ECHConfig.contents.version".  Once a suitable configuration is
-   found, the client selects the cipher suite it will use for
-   encryption.  It MUST NOT choose a cipher suite or version not
+   To offer ECH, the client first chooses a suitable ECHConfig from the
+   server's ECHConfigList.  To determine if a given "ECHConfig" is
+   suitable, it checks that it supports the KEM algorithm identified by
+   "ECHConfig.contents.kem_id", at least one KDF/AEAD algorithm
+   identified by "ECHConfig.contents.cipher_suites", and the version of
+   ECH indicated by "ECHConfig.contents.version".  Once a suitable
+   configuration is found, the client selects the cipher suite it will
+   use for encryption.  It MUST NOT choose a cipher suite or version not
    advertised by the configuration.  If no compatible configuration is
    found, then the client SHOULD proceed as described in Section 6.2.
 
@@ -648,10 +667,10 @@ Table of Contents
    *  "payload", as computed above.
 
    If optional configuration identifiers (see Section 10.4)) are used,
-   "config_id" SHOULD be set to a randomly generated eight bytes.
-   Unless specified by the application using (D)TLS or externally
-   configured on both sides, implementations MUST compute the field as
-   specified in Section 5.
+   "config_id" SHOULD be set to a randomly generated byte.  Unless
+   specified by the application using (D)TLS or externally configured on
+   both sides, implementations MUST set the field as specified in
+   Section 5.
 
 6.1.1.  ClientHelloInner Indication Extension
 
@@ -856,7 +875,8 @@ Table of Contents
    The client then modifies the "encrypted_client_hello" extension in
    ClientHelloOuter as follows:
 
-   *  "config_id" is replaced with the empty string.
+   *  "config_id" is unchanged and contains the "config_id"
+      corresponding to the client's chosen ECHConfig.
 
    *  "cipher_suite" is unchanged and contains the client's chosen HPKE
       cipher suite.
@@ -877,7 +897,7 @@ Table of Contents
    [RFC8701] "encrypted_client_hello" extension in the first ClientHello
    as follows:
 
-   *  Set the "config_id" field to a random eight byte string.
+   *  Set the "config_id" field to a random byte.
 
    *  Set the "cipher_suite" field to a supported
       HpkeSymmetricCipherSuite.  The selection SHOULD vary to exercise
@@ -949,14 +969,14 @@ Table of Contents
    addition to the "encrypted_client_hello" extension, the server MUST
    abort with an "illegal_parameter" alert.
 
-   First, the server collects a set of candidate ECHConfigs.  This set
-   is determined by one of the two following methods:
+   First, the server collects a set of candidate ECHConfig values.  This
+   list is determined by one of the two following methods:
 
-   1.  Compare ClientECH.config_id against identifiers of known
-       ECHConfigs and select the ones that match, if any, as candidates.
+   1.  Compare ClientECH.config_id against identifiers of each known
+       ECHConfig and select the ones that match, if any, as candidates.
 
-   2.  Collect all known ECHConfigs as candidates, with trial decryption
-       below determining the final selection.
+   2.  Collect all known ECHConfig values as candidates, with trial
+       decryption below determining the final selection.
 
    Some uses of ECH, such as local discovery mode, may randomize the
    ClientECH.config_id since it can be used as a tracking vector.  In
@@ -965,8 +985,8 @@ Table of Contents
    application using (D)TLS or externally configured on both sides,
    implementations MUST use the first method.
 
-   The server then iterates over all candidate ECHConfigs, attempting to
-   decrypt the "encrypted_client_hello" extension:
+   The server then iterates over the candidate ECHConfig values,
+   attempting to decrypt the "encrypted_client_hello" extension:
 
    The server verifies that the ECHConfig supports the cipher suite
    indicated by the ClientECH.cipher_suite and that the version of ECH
@@ -987,7 +1007,7 @@ Table of Contents
    fails, the server continues to the next candidate ECHConfig.
    Otherwise, the server reconstructs ClientHelloInner from
    EncodedClientHelloInner, as described in Section 5.1.  It then stops
-   considering candidate ECHConfigs.
+   iterating over the candidate ECHConfig values.
 
    Upon determining the ClientHelloInner, the client-facing server then
    forwards the ClientHelloInner to the appropriate backend server,
@@ -998,14 +1018,15 @@ Table of Contents
    The client-facing server forwards all other TLS messages between the
    client and backend server unmodified.
 
-   Otherwise, if all candidate ECHConfigs fail to decrypt the extension,
-   the client-facing server MUST ignore the extension and proceed with
-   the connection using ClientHelloOuter.  This connection proceeds as
-   usual, except the server MUST include the "encrypted_client_hello"
-   extension in its EncryptedExtensions with the "retry_configs" field
-   set to one or more ECHConfig structures with up-to-date keys.
-   Servers MAY supply multiple ECHConfig values of different versions.
-   This allows a server to support multiple versions at once.
+   Otherwise, if all candidate ECHConfig values fail to decrypt the
+   extension, the client-facing server MUST ignore the extension and
+   proceed with the connection using ClientHelloOuter.  This connection
+   proceeds as usual, except the server MUST include the
+   "encrypted_client_hello" extension in its EncryptedExtensions with
+   the "retry_configs" field set to one or more ECHConfig structures
+   with up-to-date keys.  Servers MAY supply multiple ECHConfig values
+   of different versions.  This allows a server to support multiple
+   versions at once.
 
    Note that decryption failure could indicate a GREASE ECH extension
    (see Section 6.2), so it is necessary for servers to proceed with the
@@ -1025,9 +1046,9 @@ Table of Contents
    ClientHelloOuter also contains the "encrypted_client_hello"
    extension.  If not, it MUST abort the handshake with a
    "missing_extension" alert.  Otherwise, it checks that
-   ClientECH.cipher_suite is unchanged, and that ClientECH.config_id and
-   ClientECH.enc are empty.  If not, it MUST abort the handshake with an
-   "illegal_parameter" alert.
+   ClientECH.cipher_suite and ClientECH.config_id are unchanged, and
+   that ClientECH.enc is empty.  If not, it MUST abort the handshake
+   with an "illegal_parameter" alert.
 
    Finally, it decrypts the new ClientECH.payload as a second message
    with the previous HPKE context:
@@ -1441,7 +1462,7 @@ Table of Contents
    not possible.  See Section 10.2 for more details regarding plaintext
    DNS.
 
-   Authenticating the ECHConfigs structure naturally authenticates the
+   Authenticating the ECHConfig structure naturally authenticates the
    included public name.  This also authenticates any retry signals from
    the client-facing server because the client validates the server
    certificate against the public name before retrying.
@@ -1631,7 +1652,7 @@ Table of Contents
    IANA is requested to create the following three entries in the
    existing registry for ExtensionType (defined in [RFC8446]):
 
-   1.  encrypted_client_hello(0xfe09), with "TLS 1.3" column values set
+   1.  encrypted_client_hello(0xfe0a), with "TLS 1.3" column values set
        to "CH, EE", and "Recommended" column set to "Yes".
 
    2.  ech_is_inner (0xda09), with "TLS 1.3" column values set to "CH",
@@ -1663,87 +1684,89 @@ Table of Contents
    [HTTPS-RR] Schwartz, B., Bishop, M., and E. Nygren, "Service binding
               and parameter specification via the DNS (DNS SVCB and
               HTTPS RRs)", Work in Progress, Internet-Draft, draft-ietf-
-              dnsop-svcb-https-02, 2 November 2020,
-              <https://www.ietf.org/archive/id/draft-ietf-dnsop-svcb-
-              https-02.txt>.
+              dnsop-svcb-https-04, 17 March 2021,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-
+              svcb-https-04.txt>.
 
    [I-D.ietf-tls-exported-authenticator]
               Sullivan, N., "Exported Authenticators in TLS", Work in
               Progress, Internet-Draft, draft-ietf-tls-exported-
               authenticator-14, 25 January 2021,
-              <https://www.ietf.org/archive/id/draft-ietf-tls-exported-
-              authenticator-14.txt>.
+              <https://datatracker.ietf.org/doc/html/draft-ietf-tls-
+              exported-authenticator-14.txt>.
 
    [I-D.irtf-cfrg-hpke]
               Barnes, R. L., Bhargavan, K., Lipp, B., and C. A. Wood,
               "Hybrid Public Key Encryption", Work in Progress,
               Internet-Draft, draft-irtf-cfrg-hpke-08, 15 February 2021,
-              <https://www.ietf.org/archive/id/draft-irtf-cfrg-hpke-
-              08.txt>.
+              <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-
+              hpke-08.txt>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
-              <https://www.rfc-editor.org/info/rfc2119>.
+              <https://datatracker.ietf.org/doc/html/rfc2119>.
 
    [RFC7685]  Langley, A., "A Transport Layer Security (TLS) ClientHello
               Padding Extension", RFC 7685, DOI 10.17487/RFC7685,
-              October 2015, <https://www.rfc-editor.org/info/rfc7685>.
+              October 2015,
+              <https://datatracker.ietf.org/doc/html/rfc7685>.
 
    [RFC7918]  Langley, A., Modadugu, N., and B. Moeller, "Transport
               Layer Security (TLS) False Start", RFC 7918,
               DOI 10.17487/RFC7918, August 2016,
-              <https://www.rfc-editor.org/info/rfc7918>.
+              <https://datatracker.ietf.org/doc/html/rfc7918>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
-              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+              May 2017, <https://datatracker.ietf.org/doc/html/rfc8174>.
 
    [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
               Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
-              <https://www.rfc-editor.org/info/rfc8446>.
+              <https://datatracker.ietf.org/doc/html/rfc8446>.
 
 13.2.  Informative References
 
    [I-D.kazuho-protected-sni]
               Oku, K., "TLS Extensions for Protecting SNI", Work in
               Progress, Internet-Draft, draft-kazuho-protected-sni-00,
-              18 July 2017, <https://www.ietf.org/archive/id/draft-
-              kazuho-protected-sni-00.txt>.
+              18 July 2017, <https://datatracker.ietf.org/doc/html/
+              draft-kazuho-protected-sni-00.txt>.
 
    [RFC7301]  Friedl, S., Popov, A., Langley, A., and E. Stephan,
               "Transport Layer Security (TLS) Application-Layer Protocol
               Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
-              July 2014, <https://www.rfc-editor.org/info/rfc7301>.
+              July 2014,
+              <https://datatracker.ietf.org/doc/html/rfc7301>.
 
    [RFC7858]  Hu, Z., Zhu, L., Heidemann, J., Mankin, A., Wessels, D.,
               and P. Hoffman, "Specification for DNS over Transport
               Layer Security (TLS)", RFC 7858, DOI 10.17487/RFC7858, May
-              2016, <https://www.rfc-editor.org/info/rfc7858>.
+              2016, <https://datatracker.ietf.org/doc/html/rfc7858>.
 
    [RFC7924]  Santesson, S. and H. Tschofenig, "Transport Layer Security
               (TLS) Cached Information Extension", RFC 7924,
               DOI 10.17487/RFC7924, July 2016,
-              <https://www.rfc-editor.org/info/rfc7924>.
+              <https://datatracker.ietf.org/doc/html/rfc7924>.
 
    [RFC8094]  Reddy, T., Wing, D., and P. Patil, "DNS over Datagram
               Transport Layer Security (DTLS)", RFC 8094,
               DOI 10.17487/RFC8094, February 2017,
-              <https://www.rfc-editor.org/info/rfc8094>.
+              <https://datatracker.ietf.org/doc/html/rfc8094>.
 
    [RFC8484]  Hoffman, P. and P. McManus, "DNS Queries over HTTPS
               (DoH)", RFC 8484, DOI 10.17487/RFC8484, October 2018,
-              <https://www.rfc-editor.org/info/rfc8484>.
+              <https://datatracker.ietf.org/doc/html/rfc8484>.
 
    [RFC8701]  Benjamin, D., "Applying Generate Random Extensions And
               Sustain Extensibility (GREASE) to TLS Extensibility",
               RFC 8701, DOI 10.17487/RFC8701, January 2020,
-              <https://www.rfc-editor.org/info/rfc8701>.
+              <https://datatracker.ietf.org/doc/html/rfc8701>.
 
    [RFC8744]  Huitema, C., "Issues and Requirements for Server Name
               Identification (SNI) Encryption in TLS", RFC 8744,
               DOI 10.17487/RFC8744, July 2020,
-              <https://www.rfc-editor.org/info/rfc8744>.
+              <https://datatracker.ietf.org/doc/html/rfc8744>.
 
 Appendix A.  Alternative SNI Protection Designs
 
@@ -1812,6 +1835,24 @@ Appendix B.  Acknowledgements
    Richard Barnes, Christian Huitema, Patrick McManus, Matthew Prince,
    Nick Sullivan, Martin Thomson, and David Benjamin also provided
    important ideas and contributions.
+
+Appendix C.  Change Log
+
+      *RFC Editor's Note:* Please remove this section prior to
+      publication of a final version of this document.
+
+   Issue and pull request numbers are listed with a leading octothorp.
+
+C.1.  Since draft-ietf-tls-esni-09
+
+   *  Finalize HPKE dependency (#390)
+
+   *  Move from client-computed to server-chosen, one-byte config
+      identifier (#376, #381)
+
+   *  Rename ECHConfigs to ECHConfigList (#391)
+
+   *  Clarify some security and privacy properties (#385, #383)
 
 Authors' Addresses
 
