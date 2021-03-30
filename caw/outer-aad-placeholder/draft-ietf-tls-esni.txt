@@ -530,21 +530,10 @@ Table of Contents
    "ClientECH.cipher_suite", "ClientECH.config_id", and "ClientECH.enc"
    fields of the payload of the "encrypted_client_hello" extension.  The
    last parameter, "outer_hello", is computed by serializing
-   ClientHelloOuter with the "encrypted_client_hello" extension replaced
-   with an empty "ClientECH" structure whose contents are as follows:
-
-      struct {
-         HpkeSymmetricCipherSuite {
-            HpkeKdfId kdf_id = 0x0000;
-            HpkeAeadId aead_id = 0x0000;
-         } cipher_suite;
-         uint8 config_id = 0x00;
-         opaque enc<1..2^16-1> = 0x0000;     // empty list
-         opaque payload<1..2^16-1> = 0x0000; // empty list
-      } ClientECH;
-
-   Note this serialization of ClientHelloOuter does not include the
-   four-byte header included in the Handshake structure.
+   ClientHelloOuter with the "encrypted_client_hello" extension set to
+   the empty string, i.e., the "extension_data" list has zero length.
+   Note this serialization does not include the four-byte header
+   included in the Handshake structure.
 
    The decompression process in Section 5.1 forbids
    "encrypted_client_hello" in OuterExtensions.  This ensures the
