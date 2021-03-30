@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2021-03-08T18:55:27.451499+00:00",
+  "timestamp": "2021-03-30T14:01:06.887480+00:00",
   "repo": "tlswg/draft-ietf-tls-esni",
   "labels": [
     {
@@ -52,6 +52,11 @@
       "name": "ready-for-text",
       "description": "",
       "color": "f9d0c4"
+    },
+    {
+      "name": "pre-wglc",
+      "description": "Pre-WGLC issue",
+      "color": "d4c5f9"
     }
   ],
   "issues": [
@@ -3582,10 +3587,12 @@
       "author": "chris-wood",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "pre-wglc"
+      ],
       "body": "We need some form of analysis before we ship this. Filing an issue to track that task.",
       "createdAt": "2019-07-11T02:25:38Z",
-      "updatedAt": "2019-07-16T16:55:06Z",
+      "updatedAt": "2021-03-23T00:50:30Z",
       "closedAt": null,
       "comments": [
         {
@@ -5579,7 +5586,7 @@
       "labels": [],
       "body": "ECH currently uses two different kinds of padding. The encrypted ClientHello is padded with the padding extension, while the server response is padded with TLS 1.3 record layer padding.\r\nhttps://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-07#section-7.1\r\nhttps://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-07#section-7.2\r\n\r\nUsing record-level padding in TLS over TCP is relatively straightforward as it\u2019s ordered. However DTLS and QUIC have their own record layers, with retransmission logic. Properly hiding some length then requires that packet loss and retransmission logic track and retransmit padding as if it were integrated into the byte stream.\r\n\r\nIn the case of QUIC, when a QUIC packet is determined to be lost, it is not retransmitted whole; instead information carried in the frames in lost packets might be sent again in new frames (draft-ietf-quic-transport, section 13.3). That same section states that PADDING frames do not need to be retransmitted. If ECH in QUIC relies on QUIC transport layer padding, that would need to be changed, and implementations would need to track how much adding is associated with CRYPTO frame data for retransmission.\r\n\r\nQUIC additionally needs the padding size communicated across API boundaries between the TLS and QUIC implementations. It\u2019s likely that everyone\u2019s first pass at the API will omit this, only to need to add an extra parameter (API change) later when they implement ECH.\r\n\r\nThis seems a somewhat general issue between padding at reliably- and unreliably-transmitted layers of the stack. HTTP/3 has something analogous (though carried in slightly frames). That draft actually discusses two options for padding and calls out the relation to packet loss:\r\n\r\n> Where HTTP/2 employs PADDING frames and Padding fields in other frames to make a connection more resistant to traffic analysis, HTTP/3 can either rely on transport-layer padding or employ the reserved frame and stream types discussed in Section 7.2.8 and Section 6.2.3. These methods of padding produce different results in terms of the granularity of padding, how padding is arranged in relation to the information that is being protected, whether padding is applied in the case of packet loss, and how an implementation might control padding. Redundant padding could even be counterproductive.\r\n\r\nhttps://quicwg.org/base-drafts/draft-ietf-quic-http.html#name-padding-and-traffic-analysi\r\n\r\nShould we match that precedent and move the padding into the handshake itself? That would make it apply to DTLS and QUIC transparently. If we do, a couple possibilities to start with:\r\n\r\n* Say that ECH implementations must tolerate unsolicited padding extensions and inject those into various messages. This is a goofy around messages without extensions (CertificateVerify), or messages with multiple extension blocks (Certificate), but as long as there is an extension block _somewhere_ in each padded flight, it's probably possible to fudge it.\r\n* Say that ECH adds a new kind of Padding handshake message, which the sender can incorporate into the handshake as needed, and the receiver ignores.\r\n\r\nIf we leave ECH as-is, it seems to me QUIC (both spec and implementations) needs some changes to track padding across retransmission.",
       "createdAt": "2020-08-13T18:03:12Z",
-      "updatedAt": "2020-11-19T12:09:39Z",
+      "updatedAt": "2021-03-08T20:11:22Z",
       "closedAt": null,
       "comments": [
         {
@@ -7855,7 +7862,7 @@
       "labels": [],
       "body": "I was thinking about #316 and the discussion on server HRR checks started by https://github.com/tlswg/draft-ietf-tls-esni/issues/325#issuecomment-705796082, and I'm not sure HRR cookies even work in split mode right now. First off, suppose we don't merge something like #316. The current text says:\r\n\r\n> Note: if the inner and outer ClientHellos use different groups for\r\n> their key shares or differ in some other way, then the HelloRetryRequest may\t\r\n> actually be invalid for one or the other ClientHello, in which case a fresh\t\r\n> ClientHello MUST be generated, ignoring the instructions in HelloRetryRequest.\t\r\n> Otherwise, the usual rules for HelloRetryRequest processing apply\r\n\r\nThis means if you get a cookied HRR only good for ClientHelloInner, there's no requirement to stick the cookie in ClientHelloOuter! But now the client-facing server can't see the cookie, so it can't be stateless. It would seem like #316 fixes this, but now we have a more fundamental problem: whose cookie?\r\n\r\nSuppose the client-facing server wishes to handle HRR statelessly. It decrypts the first ClientHelloInner and forwards it to the backend server. If the backend server responds with HRR, the client-facing server must forward the HRR as-is, or the transcript breaks. But the client-facing server has no opportunity to bind its state (ech_hrr_key) into the HRR cookie. (Perhaps there isn't even one. If there is, it's encrypted with the backend server's key anyway. Either way, it's fixed now.)\r\n\r\nThe simplest solution to all this is to only support stateful client-facing servers in split mode, unless the client-facing and backend servers can coordinate enough to share one cookie. I don't know if that would satisfy everyone. I could imagine doing something horrific to HRR.cookie, akin to what we did to ServerHello.random, but that sounds really messy.",
       "createdAt": "2020-10-11T15:59:26Z",
-      "updatedAt": "2020-11-19T12:09:39Z",
+      "updatedAt": "2021-03-08T20:11:22Z",
       "closedAt": null,
       "comments": [
         {
@@ -8104,7 +8111,7 @@
       "labels": [],
       "body": "The primary \"don't stick out\" [RFC8744] consideration for ECH is to ensure that the new extension does not trigger middlebox misbehavior. To accomplish this, the draft specifies two protocol variants: in the \"real-ECH\" protocol the client offers the ECH extension, which is processed by the server; in the \"grease-ECH\" protocol, the client generates a dummy ECH extension, which is ignored or rejected by the server. Grease-ECH is designed to look enough like real-ECH so that middleboxes do not differentiate the latter from the former, the idea being that if grease-ECH can be deployed without triggering middlebox misbehavior, then real-ECH ought to be deployable, too.\r\n\r\nBut what do we mean when we say grease-ECH should \"look like\" real-ECH? In ECH-08 the stated goal is \"to hide, to some extent, **(a)** whether or not a specific server supports ECH and **(b)** whether or not ECH was accepted for a particular connection\" [ECH-08, [Sec.10.1](https://tools.ietf.org/html/draft-ietf-tls-esni-08#section-10.1)]. These goals are hard to meet. First, an attacker can violate **(a)** by simply running grease-ECH with the server to see if it returns retry configs. Second, there are a number of ways to distinguish real-ECH from grease-ECH, thereby violating **(b)**:\r\n1. @huitema's [client-reaction attack](https://mailarchive.ietf.org/arch/msg/tls/EAeKCNq7JAFm8DFaoe2MwSslZTQ/).\r\n1. If the ECH config is known to the attacker, then it can use ClientECH.config_id to distinguish real-ECH from grease-ECH. \r\n1. The outer SNI must match ECHConfig.public_name. Hence, for connections to a given backend server, the outer SNI will be different in real-ECH than in grease-ECH.\r\n1. The client and server must negotiate TLS 1.3 when ECH is accepted, but may otherwise negotiate an earlier version. In particular, it is valid for a client to run grease-ECH but not indicate support for 1.3.\r\n1. PSK must not be offered in the outer CH in real-ECH, but may be offered in grease-ECH. In general, the set of extensions negotiated may depend on whether ECH was accepted.\r\n1. The client-facing server must not request client authentication when rejecting ECH, but the backend server may request client authentication when ECH was accepted.\r\n1. Whether or not an HRR message is issued by the server may depend on ECH acceptance.\r\n1. There are a few active distinguisher attacks that exploit the HRR codepath.\r\n\r\nSome of these distinguishers can be mitigated by careful implementation, while mitigating others would require changes to the specification. (E.g., #353.) However, it's unlikely that _all_ implementations will mitigate _all_ of these distinguishers. Moreover, future extensions are likely to change the shape of TLS in a way that leads to yet more distinguishers.\r\n\r\nGiven all of this, I wonder if indistinguishability (of real-ECH from grease-ECH) is the right way to think about this problem. It seems to me that it's stronger than strictly necessary, since the existence of a distinguisher does not necessarily imply that some feature of real-ECH will trigger middlebox misbehavior that would not otherwise be triggered by grease-ECH. For example, while the outer SNI might be a dead give away of likely ECH usage, this value is unlikely to impact middlebox behavior. Similarly, the absence of the PSK extension in real-ECH is unlikely to cause issues.\r\n\r\nIf it were possible to enumerate the set of properties that impact middlebox behavior, then ensuring that middleboxes don't differentiate between real-ECH and grease-ECH may simply be a matter of ensuring that this set of properties does not vary. This approach would be roughly analogous to the design of \"Middlebox Compatibility Mode\" in TLS 1.3, which makes the handshake \"look like\" a particular mode of 1.2 that middleboxes are known to tolerate. Of course, a curious adversary (e.g., a censor) can easily distinguish between these, but experience suggests that middleboxes do not treat them differently.\r\n\r\nThis leaves us the daunting task of deciding what features are known to impact the behavior of existing middleboxes. Here's a preliminary list of things that might fit in this category. For the sake of discussion, let's call them **differentiable features**:\r\n1. The set of extensions that appear to be negotiated;\r\n1. Visible alerts, e.g., \"bad_record_mac\";\r\n1. Number of round trips in a given transport context (e.g., TCP connection);\r\n1. Packet size, or the number of packets comprising a single message;\r\n1. Timing;\r\n1. ...\r\n\r\nI think we should set the following goals for ECH-09 (or some draft that follows it).\r\n1. If we can agree on a set of differentiable features, then we should ensure that this set does not vary between real-ECH and grease-ECH.\r\n1. ECH-08 aims only to mitigate **passive** \"don't stick out\" attacks, but there is a lot of evidence that middleboxes exhibit **active** behavior. (For example, middleboxes have been observed removing CH extensions they don't recognize or adding their own.) Thus, we should aim to thwart attacks that change the set of differentiable features in real-ECH vs. grease-ECH. This includes @huitema's attack in particular: see #353.\r\n1. To the greatest extent possible, the spec should allow for implementations to aim for the strongest possible notion of security. For example, we might consider relaxing the requirement that the outer SNI matches ECHConfig.public_name, so long as this change doesn't impact interoperability.\r\n",
       "createdAt": "2020-11-03T01:28:48Z",
-      "updatedAt": "2020-12-17T21:44:52Z",
+      "updatedAt": "2021-03-08T20:11:22Z",
       "closedAt": null,
       "comments": [
         {
@@ -8257,7 +8264,7 @@
       "labels": [],
       "body": "I just noticed this as I was pondering our various HRR issues. RFC8446, section 4.1.2 says:\r\n\r\n> [...] The client will also send a ClientHello when the server has responded to its ClientHello with a HelloRetryRequest.  In that case, the client MUST send the same ClientHello without modification, except as follows:\r\n>\r\n> * [...various cases regarding existing extensions...]\r\n>\r\n> *  Other modifications that may be allowed by an extension defined in the future *and present in the HelloRetryRequest*.\r\n\r\nhttps://tools.ietf.org/html/rfc8446#section-4.1.2\r\n\r\nThe \"and present in the HelloRetryRequest\" portion is fun. In RFC8446 as written, we're not allowed to change the `encrypted_client_hello` extension on the second ClientHello unless the server sent `encrypted_client_hello` in HelloRetryRequest, which it doesn't. With the protocol as-is, it seems we'll at least need some text to deal with the contradiction.\r\n\r\nThe impact is practice is thankfully limited. If the servers does not enforce consistency between the two ClientHellos, it doesn't matter. (They're not required to, but they're not explicitly forbidden from it either, and a stateless server may need to enforce some minimum consistency to avoid getting into a broken state.) If a server does, ECH's behavior on HRR will break it. Such a server is supposed to handshake with ClientHelloOuter, so it just affects the retry flow. That's maybe okay, but mildly annoying. Administrators using server software that checks need to know to first upgrade to a version that doesn't check before trying to deploy ECH.\r\n\r\nWe can also add an ECH extension to HRR. Then, on ECH-reject + HRR, the server perhaps wouldn't send the extension and the client would be required to replay the extension. This is a waste in many ways, but would work. This would break don't stick out, but some threat models, don't stick out with HRR is hopeless anyway. (See https://github.com/tlswg/draft-ietf-tls-esni/pull/352#issuecomment-721824226.) It would also be weirdly asymmetric between ECH and SH.\r\n\r\nThat said, this constraint is also pretty obnoxious. For instance, #313 currently adds a new padding extension codepoint, because the old one isn't defined for other messages. However, the RFC8446 allowance only works for the existing padding code point, so you don't want to send any other code points in ClientHello, lest the server force you to keep it unchanged in ClientHello2. So maybe we should confirm no servers did the fully strict check and undo that constraint? (Although, for #313, I personally favor the padding message strategy anyway.)",
       "createdAt": "2020-11-06T21:05:33Z",
-      "updatedAt": "2020-11-19T12:09:28Z",
+      "updatedAt": "2021-03-08T20:11:22Z",
       "closedAt": null,
       "comments": [
         {
@@ -8488,7 +8495,7 @@
       "labels": [],
       "body": "I wanted to jot this down before the holidays, in advance of writing a more rigorous PR. This is a proposal to go fix all our HRR problems in one swoop (#233, #373, #358, and #333).\r\n\r\nFirst, whatever our \"don't stick out\" goals are (#354), sticking out on true HRR flows is pretty much hopeless if the attacker is allowed to make a second connection and probe server behavior: replay the first ClientHello and then perturb the second ClientHello's ciphertext. The server can't change its mind after the fact. So I'm going to intentionally give up on that, which means fixing #358 is possible. The proposal is thus:\r\n\r\n* The client sends ClientHelloOuter1 and ClientHelloInner1 as in the current document.\r\n* If client-facing server accepts ECH, it forwards ClientHelloInner1 to the backend server, as before.\r\n* If the backend server sends HelloRetryRequest in response, call this HelloRetryRequestInner.\r\n* The backend server constructs HelloRetryRequestOuter containing the following:\r\n  * An encrypted_client_hello extension with the HelloRetryRequestInner, encrypted with the HPKE context (see open questions).\r\n  * Optionally, a cookie extension with the outer cookie (fixes #333)\r\n  * No other extensions are allowed, though future extensions, if solicited by ClientHelloOuter1 may change this. (See open questions.)\r\n* HelloRetryRequests signals to the client whether ECH was accepted or not (fixes #373, avoids #316) by the presence of the encrypted_client_hello extension:\r\n* If there is no encrypted_client_hello extension, the client computes ClientHello2 based on ClientHelloOuter1 and HelloRetryRequest. There is no more ClientHelloInner2. We're not doing ECH, and HRR may not even be valid for CHI2 (the #316 mess). Instead, it blindly copies over ClientHelloOuter1's extension. This is a waste of bytes, but fixes #358.\r\n* If there is an encrypted_client_hello extension...\r\n  * First, the client decrypts HelloRetryRequestInner. If it fails, it sends decrypt_failure and aborts. GREASE ECH is considered to always fail to decrypt and always sends decrypt_failure.\r\n  * Otherwise, the client computes ClientHelloInner2 based on HelloRetryRequestInner in the usual way, handling errors in the usual way.\r\n  * The client constructs ClientHelloOuter2 containing the encrypted ClientHelloInner2 and HelloRetryRequestOuter.cookie. We know the server is accepting ECH at this point, so there is no need to send much of any other fields. See open questions below.\r\n* HRR or not, the ServerHello is required to have an ECH acceptance confirmation as usual. The client processes it as follows:\r\n  * If there was no HRR, do what the document currently says and figure out ECH acceptance here.\r\n  * If there was an HRR, you already know ECH accept or reject. If ECH reject, move and and complete the outer handshake without any fuss. The inner handshake terminated too early to compute handshake_secret anyway. If ECH accept, check the acceptance confirmation and send illegal_parameter or so if it's wrong. (See open questions below)\r\n\r\nI believe this solves our various HRR problems:\r\n\r\n* The client-facing server can send an HRR cookie without coordinating with the inner handshake (#333).\r\n* The client does not need to evaluate one HRR against two different ClientHellos, so the two ClientHellos can have arbitrarily different preferences (#233, #316).\r\n* The client knows ECH accept at the first server response, so it does not need to construct two different second ClientHellos (#373).\r\n* The ECH extension only changes when solicited (#358).\r\n\r\nThoughts?\r\n\r\n### Open questions\r\n\r\n#### How and should we encrypt HelloRetryRequestInner?\r\n\r\nThe above sketch encrypts HRRInner, but HPKE only allows the sender to encrypt. This is easy to specify though: use the exporters to derive another AEAD key and toss it into the HPKE cipher suite's AEAD.\r\n\r\nAs for why encrypt it, things should still work if we stick it in the clear. But we may want to for two reasons:\r\n\r\n1. Like backend server tickets, backend server cookies are, today, not particularly constrained w.r.t. what they reveal. A ticket or cookie from one TLS implementation may be different from the other, and Split Mode servers may have multiple backend implementations in their anonymity set. It may also vary for other reasons. NewSessionTicket is encrypted, as is the pre_shared_key extension, so we've solved it for tickets. ClientHello.cookie is also encrypted, which leaves HRR.cookie. Encrypting HRRInner fills that in.\r\n2. If HRRInner is not authenticated by the HPKE context, an attacker can try to distinguish GREASE by sending a fake cleartext HRRInner and seeing how the client responds. Authenticating HRRInner means you cannot spoof an inner HRR flow.\r\n\r\nWhether the second property is worthwhile is unclear (https://github.com/tlswg/draft-ietf-tls-esni/issues/354#issuecomment-743924431), but I think the first property is valuable, at which point we get the second anyway.\r\n\r\n#### Other HelloRetryRequestOuter extensions? What is ClientHelloOuter2?\r\n\r\nThis design avoids #316 by assembling a cursory ClientHelloOuter2, rather than actually trying to continue the outer handshake. We would need to decide how to do that. I can think of a few possibilities:\r\n\r\n1. Simply specify throwaway values for all the non-extension fields and declare ClientHelloOuter2 contains exactly two extensions, an optional cookie and encrypted_client_hello. EncodedClientHelloInner2 does not bother with outer_extensions because there is nothing to compress.\r\n2. Make up a new message type to avoid the throwaway fields.\r\n3. ~~Compute an actual ClientHelloOuter2, following RFC8446, based on ClientHelloOuter1 and HelloRetryRequestOuter. If HelloRetryRequestOuter wants to request new key_shares, that's fine. it's just pointless.~~\r\n\r\nI don't like option 3. It's conceptually kinda clever, but adds unnecessary fuss to the protocol. Consider a client which sends CHO1.key_share == CHI1.key_share and compresses them. Key share preferences are rarely secret and this avoids doubling up potentially large post-quantum values.\r\n\r\nThe backend server now requests HRR because it wanted a different key share. So CHI2.key_share != CHI1.key_share and is based on HRRI.key_share. But the client-facing server probably did the straightforward thing and didn't send HRRO.key_share because there's no point. It'll never process CHO2.\r\n\r\nOption 3 would then require that CHO2.key_share == CHO1.key_share because HRRO did not request a change. That means CHO2.key_share != CHI2.key_share and the client must waste a lot of bytes sending two of them. In contrast, options 1 and 2 say that CHO2.key_share doesn't exist anyway, so we only ever send one key share.\r\n\r\nIt also adds implementation complexity to the client, which now needs to evaluate two different full-featured HRRs in one handshake, despite it being unused.\r\n\r\nOption 1 and 2 are basically equivalent, though it's worth noting that HRRO and CHO2 do not _quite_ have the same rules as anymore, so whether we want to stick them in the same message type is interesting...\r\n\r\n#### SH.random acceptance signal after HRR?\r\n\r\nAfter HRR, the SH.random acceptance signal doesn't do anything. We could just as easily omit it, because the client has already gotten the signal. The above sketch keeps it in, mostly for consistency's sake: right now we require that backend servers support the ech_is_inner extension. Getting this wrong will be noticed because the client will not successfully complete the connection. If we omit the acceptance signal in HRR flows, the client will no longer consistently notice. As long as we have this requirement, enforcing it uniformly is more robust, so I'm thinking we keep it in there.\r\n\r\n#### Copy or omit CH2.encrypted_client_hello on reject?\r\n\r\nThis sketch says to copy CH2.encrypted_client_hello on ECH reject. This is a waste of bytes but retains compatibility with RFC8446's rules. In particular, we know of a compatibility issue in #358. It seemed from the WG discussion we generally think the RFC8446 rules are wrong, so we could intentionally break them and drop the extension.\r\n\r\nMy inclination is we should try to get the rule changed and implementations fixed, but maybe that should happen separately from ECH and we copy it for now.",
       "createdAt": "2020-12-17T22:58:11Z",
-      "updatedAt": "2021-02-24T04:34:32Z",
+      "updatedAt": "2021-03-08T20:11:15Z",
       "closedAt": null,
       "comments": [
         {
@@ -8641,7 +8648,7 @@
       "labels": [],
       "body": "A naive implementation of decoding the inner ClientHello can easily go quadratic when processing outer_extensions. Thus far, nothing in TLS has required searching for O(N) extensions, only O(implemented extensions). It's likely a lot of TLS implementations handle the extensions list linearly most of the time.\r\n\r\nouter_extensions is now the first time you have to search for extensions you may not have implemented. A naive implementation would then go quadratic, which is a server DoS risk. It doesn't need to go quadratic (for instance, you can sort ClientHelloOuter's extensions and then binary search per lookup), but it's probably worth at least calling this out, if not switching to a simpler decoding scheme.\r\n\r\n(For a simpler decoder, we already require CHInner group the compressed extensions consecutively. We could do the same with CHOuter, at which point we only need to reference one byte slice, be it by offset/length or some goofier scheme.)",
       "createdAt": "2021-02-05T23:33:28Z",
-      "updatedAt": "2021-03-08T16:51:11Z",
+      "updatedAt": "2021-03-08T20:11:15Z",
       "closedAt": null,
       "comments": [
         {
@@ -8728,15 +8735,15 @@
       "id": "MDU6SXNzdWU4MDQwMjE1NjY=",
       "title": "Consider a shorter config ID length",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/379",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "chris-wood",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Assuming #376 lands, we need to decide how long we want this server-chosen identifier to be. There are various operational and privacy considerations at play. For example, shorter identifiers mean that GREASE clients may produce colliding values with higher probability, and the cost of trial decryption on the server may be an overly expensive operational cost for some deployments. Longer identifiers may also mean that using keys as a tracking vector is easier. (But as @ekr has pointed out, ECH does not assume DNS answer integrity, so there are other tracking mechanisms at play.) Let's use this issue to sort out this question. \r\n\r\ncc @davidben, @cjpatton, @martinthomson ",
       "createdAt": "2021-02-08T22:27:58Z",
-      "updatedAt": "2021-03-08T16:40:02Z",
-      "closedAt": null,
+      "updatedAt": "2021-03-23T20:23:07Z",
+      "closedAt": "2021-03-23T20:23:07Z",
       "comments": [
         {
           "author": "davidben",
@@ -9041,6 +9048,600 @@
           "body": "I should have responded earlier (thought I did...).  The fact that the configuration is covered prevents this from being a problem.  I missed that.",
           "createdAt": "2021-03-01T04:32:07Z",
           "updatedAt": "2021-03-01T04:32:07Z"
+        }
+      ]
+    },
+    {
+      "number": 395,
+      "id": "MDU6SXNzdWU4MjUwMjgxNTg=",
+      "title": "(Editorial) Add some more structure to \"Offering ECH\"",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/395",
+      "state": "OPEN",
+      "author": "sayrer",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "I think a brief summary at the top of the section might help a lot. It could just be a list with links to subsections containing the text that's already there.\r\n\r\nAs an example, I wrote this brief summary for Rustls collaborators.\r\n\r\n```\r\nThe client steps are as follows:\r\n\r\n- Create a ClientHelloInner (just a ClientHello with some restrictions)\r\n- Create an \u201cEncodedClientHelloInner\u201d that can be a no-op for now, since we won\u2019t deduplicate anything in the ClientHelloOuter for now.\r\n- Create a ClientHelloOuter for the EncodedClientHelloInner (a ClientHello with some other restrictions).\r\n- The ClientHelloOuterAAD is computed to created \u201cAdditional authenticated data\u201d for HPKE by serializing the entire ClientHelloOuter less the last extension (which is ECH)\r\n- The encrypted_client_hello extension (ECH) is computed using choices from the ECHConfig (done for -09) and the ClientHelloOuterAAD.\r\n```",
+      "createdAt": "2021-03-08T22:44:46Z",
+      "updatedAt": "2021-03-23T20:24:15Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I like this idea. Send a PR?",
+          "createdAt": "2021-03-23T20:24:15Z",
+          "updatedAt": "2021-03-23T20:24:15Z"
+        }
+      ]
+    },
+    {
+      "number": 396,
+      "id": "MDU6SXNzdWU4MjgzODQzMjE=",
+      "title": "A MUST for inclusion of public_name in outer SNI seems wrong",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/396",
+      "state": "OPEN",
+      "author": "sftcd",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "For at least command line clients (e.g. curl) and perhaps for censorship circumvention tools it makes sense to allow the outer SNI to contain nothing or something that is not the public_name from the SVCB RR. It's possible that any tool that acquires an ECHConfig from a non-DNS source would benefit from that option too.\r\n\r\nThe offending (for me:-) text is in section 6.1, 2nd list, bullet 7 where it says: 'The value of ECHConfig.contents.public_name MUST be placed in the \"server_name\" extension.'\r\n\r\nThere may be clients that do need the above. I'm not sure how to chacterise those in a short phrase, but that's likely possible. At the IETF-110 TLS session mention was made of clients that need to fallback but I'm not sure what reference would be correct for that if e.g. we appended something like \"....for clients that need to be able to fallback. [ref]\"",
+      "createdAt": "2021-03-10T21:55:49Z",
+      "updatedAt": "2021-03-25T04:11:18Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> and perhaps for censorship circumvention tools \r\n\r\nCensorship circumvention isn't one of the stated goals of ECH.\r\n\r\n> It's possible that any tool that acquires an ECHConfig from a non-DNS source would benefit from that option too.\r\n\r\nEven if an ECHConfig is acquired from a non-DNS source, it still has the ECHConfig.contents.public_name field, which, as specified in 6.1.3.3, is necessary because:\r\n\r\n\"The client MUST verify that the certificate is valid for ECHConfig.contents.public_name. If invalid, it MUST abort the connection with the appropriate alert.\"\r\n",
+          "createdAt": "2021-03-10T22:12:35Z",
+          "updatedAt": "2021-03-10T22:12:35Z"
+        },
+        {
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I believe we should keep this as-is. Fallback is for the server's benefit and the client has no way of knowing whether it will be needed.",
+          "createdAt": "2021-03-10T22:34:26Z",
+          "updatedAt": "2021-03-10T22:34:26Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "+1 -- for robustness reasons, I believe we should keep this as-is.",
+          "createdAt": "2021-03-10T22:44:30Z",
+          "updatedAt": "2021-03-10T22:44:30Z"
+        },
+        {
+          "author": "sayrer",
+          "authorAssociation": "NONE",
+          "body": "I also found this requirement odd. Is it really necessary with the changes to config_id in draft -10? If someone could explain why this should be mandatory, that would be fine. I just don't understand the requirement.",
+          "createdAt": "2021-03-10T23:08:14Z",
+          "updatedAt": "2021-03-10T23:08:14Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "When there is a mismatch between DNS and the server configuration, the server will handshake with the outer ClientHello. The expectation when that happens is that the connection is authenticated for the public name, which gives an authenticated recovery signal. That means the server needs to, e.g., select a certificate that covers the public name. Thus, the outer SNI selection.",
+          "createdAt": "2021-03-10T23:13:11Z",
+          "updatedAt": "2021-03-10T23:13:11Z"
+        },
+        {
+          "author": "sayrer",
+          "authorAssociation": "NONE",
+          "body": "OK, and a server that didn't need the outer SNI name would be identifiable by IP address anyway. Makes sense.",
+          "createdAt": "2021-03-10T23:38:13Z",
+          "updatedAt": "2021-03-10T23:38:13Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 10/03/2021 23:13, David Benjamin wrote:\n> When there is a mismatch between DNS and the server configuration,\n> the server will handshake with the outer ClientHello. The expectation\n> when that happens is that the connection is authenticated for the\n> public name, which gives an authenticated recovery signal. That means\n> the server needs to, e.g., select a certificate that covers the\n> public name. Thus, the outer SNI selection.\n\nSure - the right outer.sni MUST be valid for the client\nto act upon failed ECH. I don't see that that implies that\nthe ech.public_name MUST be sent though.\n\nS.\n\n\n\n",
+          "createdAt": "2021-03-11T11:43:29Z",
+          "updatedAt": "2021-03-11T11:43:29Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\nHiya,\n\nOn 10/03/2021 22:12, Carrick Bartle wrote:\n>> and perhaps for censorship circumvention tools\n> \n> Censorship circumvention isn't one of the stated goals of ECH.\n\nI understand the sensitivities there but nor are we forced to\nmake life harder for those who develop such applications.\n(Separately, I don't recall there being any consensus call\nrelated to whether or not that is or is not a goal.)\n\n>> It's possible that any tool that acquires an ECHConfig from a\n>> non-DNS source would benefit from that option too.\n> \n> Even if an ECHConfig is acquired from a non-DNS source, it still has\n> the ECHConfig.contents.public_name field, which, as specified in\n> 6.1.3.3, is necessary because:\n> \n> \"The client MUST verify that the certificate is valid for\n> ECHConfig.contents.public_name. If invalid, it MUST abort the\n> connection with the appropriate alert.\"\n> \n\nA requirement for the client to verify the outer.sni vs. the\npresented cert does not need to involve the public_name. I'm\nfine that the client MUST (as always) verify the presented\ncert vs. the outer.sni if ECH didn't work.\n\nI'd also be fine with a SHOULD send here, or with a \"MUST\ndefault to send public_name in outer.sni\" but an absolute\nMUST is not necessary afaics.\n\nThe issue for me is for a generic library - in that case\nbeing able to override the public_name seems like it may\nsometimes be useful and since there's no need to require\nlibrary developers to enforce the MUST, it's a bad plan\nI think.\n\nCheers,\nS.\n\n\n\n\n\n\n",
+          "createdAt": "2021-03-11T11:43:30Z",
+          "updatedAt": "2021-03-11T11:43:30Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\nHiya,\n\nOn 10/03/2021 22:34, ekr wrote:\n> I believe we should keep this as-is. Fallback is for the server's \n> benefit and the client has no way of knowing whether it will be \n> needed.\n\nNot convinced.\n\nFor a web browser talking to a web server given a sensible\nset of DNS RRs, I do agree with you. For any random TLS\nclient/server pair, I'm not yet convinced. Hence I still\nconsider an absolute MUST OTT/wrong.\n\nS.\n\n\n\n",
+          "createdAt": "2021-03-11T11:43:35Z",
+          "updatedAt": "2021-03-11T11:43:35Z"
+        },
+        {
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "One oddity of this requirement is that it presents a GREASE distinguisher when the client is connecting to an IP address with no server name.  In the GREASE case, the ClientHelloOuter.server_name is absent because [SNI only supports host names](https://tools.ietf.org/html/rfc6066#section-3). In the real-ECH case, ClientHelloOuter.server_name is present and contains ECHConfig.public_name.\r\n\r\nHowever, why use ECH at all if the IP address uniquely identifies the desired service? I think I support keeping the requirement for the sake of the fallback/retry mechanism.\r\n\r\nWas there some other scenario you're thinking of?",
+          "createdAt": "2021-03-11T18:15:14Z",
+          "updatedAt": "2021-03-11T18:15:14Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "(The outer name pretty fundamentally interacts with GREASE because the distribution of true SNIs is different from the distribution of cleartext ones, but the fact that IP addresses don't get SNIs is an insignificant component of that, given how rare they are. Any reasonable model of GREASE distinguishability would need to be a bit more subtle.)",
+          "createdAt": "2021-03-11T18:26:30Z",
+          "updatedAt": "2021-03-11T18:26:30Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "If possible, I'd like to see if we can drill down on where folks disagree.\r\n* **Fact 1:** The public name specifies the name that the client expects the client-facing server to verify in case of ECH rejection.\r\n* **Fact 2:** The outer SNI specifies the name the client expects the client-facing server to verify, regardless of whether ECH was offered.\r\n\r\nIt seems like the point of disagreement is how these two extensions --- ECH and SNI --- are meant to be composed. It seems to me that @davidben believes that SNI takes precedence: if we allowed public name != outer SNI, then this would violate the rules of the SNI extension, It seems like @sftcd believes that ECH can take precedence: allowing public name != outer SNI is OK because the client already knows what name the client-facing server will verify. Am I understanding this all correctly?",
+          "createdAt": "2021-03-23T22:20:02Z",
+          "updatedAt": "2021-03-23T22:20:02Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I'm very confused what facts 1 and 2 are trying to say.\r\n\r\nThe server_name extension, in any ClientHello, is the name of the server you're trying to contact with that ClientHello. This figures into certificate selection, and you could even imagine a protocol which uses it in lieu of an in-band Host header for virtual hosting. (Although HTTP does it in-band and doesn't care much about the server_name.)\r\n\r\nIn the ClientHelloInner, you are trying to contact the true name, so you put the true name in server_name.\r\nIn the ClientHelloOuter, you are trying to contact the public name, so you put the public name in server_name.\r\n\r\nIndependent of ECH, if you have external knowledge that such-and-such field will be interpreted in a different way and the server doesn't need the server_name, then you can go against the spec. If that external knowledge applies to the ClientHelloOuter, then you can apply that to the ClientHelloOuter. But that's not how the field is meant to work, so the spec should describe the intended semantics.",
+          "createdAt": "2021-03-23T22:37:13Z",
+          "updatedAt": "2021-03-23T22:37:13Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> Independent of ECH, if you have external knowledge that such-and-such field will be interpreted in a different way and the server doesn't need the server_name, then you can go against the spec. If that external knowledge applies to the ClientHelloOuter, then you can apply that to the ClientHelloOuter. But that's not how the field is meant to work, so the spec should describe the intended semantics.\r\n\r\nThis seems to advocate that a SHOULD, rather than a MUST, is appropriate in choosing what name goes in ClientHelloOuter, right? In particular, the spec does not accommodate external knowledge about what goes in the field. It requires it be set to ECHConfig.public_name.",
+          "createdAt": "2021-03-23T22:44:21Z",
+          "updatedAt": "2021-03-23T22:44:21Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 23/03/2021 22:44, Christopher Wood wrote:\n> This seems to advocate that a SHOULD, rather than a MUST, \n\nI think a SHOULD is correct.\n\nCheers,\nS.\n",
+          "createdAt": "2021-03-23T22:49:10Z",
+          "updatedAt": "2021-03-23T22:49:10Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> I'm very confused what facts 1 and 2 are trying to say.\r\n\r\nFact 1 says that public_name is the name of the server when ECH is rejected (i.e., the client-facing server). Fact 2 says that server_name is the name of the server. My point was merely that these facts appear to contradict one another if public_name != CHOuter.server_name. Hence, we need to decide how to compose ECH with SNI in a way that resolves the contradiction.\r\n\r\nThe answer might simply be that public_name MUST equal CHOuter.server_name. Or, we might do say something else.",
+          "createdAt": "2021-03-23T23:02:36Z",
+          "updatedAt": "2021-03-23T23:04:34Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "(I don't particular care about MUST vs. SHOULD. Whatever we say elsewhere for server_name I guess.)\r\n\r\n@cjpatton I'm not following. I think talking about public_name != CHOuter.server_name is getting causality the wrong way around.\r\n\r\nCHOuter is a construct we are inventing in ECH. That means we get to define the semantics. The semantics we've defined are that CHOuter, along with the result of handshaking with CHOuter, is intended for the ECH rejection case. How does the client know how the ECH rejection case works? Well, we also need to define that in ECH. Our definition is that you handshake against ECHConfig.public_name. Finally, server_name is a construct that has already been defined. What goes in there? RFC6066 and RFC8446 tell you. It's the name of the server you are trying to contact.\r\n\r\nWith all that, what do you put in CHOuter.server_name? Well, you put the rules together. It's the name of the server you are trying to contact in the ECH rejection case, which is ECHConfig.public_name.",
+          "createdAt": "2021-03-24T19:09:00Z",
+          "updatedAt": "2021-03-24T19:10:23Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 24/03/2021 19:09, David Benjamin wrote:\n> (I don't particular care about MUST vs. SHOULD. Whatever we say\n> elsewhere for server_name I guess.)\n\nI do:-) SHOULD seems correct to me. A MUST over-constrains\ngeneric libraries.\n\n> \n> @cjpatton I'm not following. I think talking about public_name !=\n> CHOuter.server_name is getting causality the wrong way around.\n\nI agree with the above but will quibble with some text\nbelow...\n\n> CHOuter is a construct we are inventing in ECH. That means we get to\n> define the semantics. \n\nNot really - CHOuter has to be a \"working\" CH with semantics\ndefined by 8446, so we're a lot more constrained in reality.\n\n> The semantics we've defined are that CHOuter,\n> along with the result of handshaking with CHOuter, is intended for\n> the ECH rejection case. \n\nYep.\n\n> How does the client know how the ECH\n> rejection case works, well we also need to define that. Our\n> definition is that ECHConfig.public_name tells you the name to\n> handshake against. \n\nThat's too absolute IMO. ECHConfig.public_name tells you *a*\nname that should work for the CHOuter fallback. There will be\nmany situations where another name can work as well, though\nusing ECHConfig.public_name is a fine default/SHOULD.\n\nCheers,\nS.\n",
+          "createdAt": "2021-03-24T19:44:44Z",
+          "updatedAt": "2021-03-24T19:44:44Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> Not really - CHOuter has to be a \"working\" CH with semantics defined by 8446, so we're a lot more constrained in reality.\r\n\r\nOh sure. I wasn't suggesting CHOuter and the resulting handshake get to ignore 8446. But the parameters to that handshake are not set and that's what ECH get to define.\r\n\r\n> That's too absolute IMO. ECHConfig.public_name tells you *a* name that should work for the CHOuter fallback. There will be many situations where another name can work as well, though using ECHConfig.public_name is a fine default/SHOULD.\r\n\r\nHrm, in which link of the chain were you looking to add flexibility? There's:\r\n* The implementation wants to set server_name to some value other than the name they are contacting\r\n* The implementation wants to set the name they are contacting to some value other than ECHConfig.public_name\r\n\r\nWeakening the first to SHOULD is perhaps plausible, especially if 6066 and 8446 already are less prescriptive. Weakening the second to SHOULD is much more dangerous because you lose the chain of authenticity up from the TLS handshake through X.509 to the name specified by the ECHConfig.",
+          "createdAt": "2021-03-24T20:57:31Z",
+          "updatedAt": "2021-03-24T20:57:48Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\nLet me try another way to justify a SHOULD.\n\nConsider SMTP/TLS. There can be >1 MX RR value for a domain.\nWhen forwarding a mail to ***@***.*** it may (or may not)\nbe that the correct way to handle ECH for SMTP/TLS is to look\nfor an SVCB at example.com or at one of the MX names that we\nfind at example.com. It may (or may not) be the case that\nsome or all of the server-side TLS endpoints for those MX\nnames share the same ECHConfig private values at a given\nmoment. It may (or may not) be the case that the DNS answers\nfor type65 at all those MX names and example.com are well\nmanaged and always in sync. It may (and it will:-) be the\ncase that multiple MX name type65 RRs and multiple SVCB RR\nvalues including future new SVCB or ECHConfig extensions\ninteract in ways the TLS WG can't now forsee.\n\nI think there could in future be a real use-case for ECH in\nSMTP/TLS, and that it'd be wrong for the TLS WG to decide now\nwith a MUST how ECHConfig.public_name ought be handled in all\ncases. I reckon many other protocols using TLS might also\neach have a pile of wrinkles we can't analyse.\n\nSo I argue that at least generic libraries for TLS ought\nnot be prohibited from having some kind of override that\nresults in outer.sni != ECHConfig.public_name. (And for at\nleast some generic libraries, contravening such a MUST\nwould I think be a reason why upstream might reject an\noffered PR.)\n\nAll that said, using ECHConfig.public_name SHOULD work in\nalmost all cases so is a good default and one to probably\nencourage.\n\nHope that helps,\nS.\n\nPS: As an aside: some MX names expose what we'd like to\nput in inner.sni, whereas some will not, and a simple sub-\nstring match won't always catch that. But that's an issue for\nsome mail folks to consider later, if it's a real issue. (It\nprobably isn't for TLS, but maybe is for how MTAs might use\nmultiple DoX queries.)\n\n\n",
+          "createdAt": "2021-03-25T04:11:18Z",
+          "updatedAt": "2021-03-25T04:11:18Z"
+        }
+      ]
+    },
+    {
+      "number": 397,
+      "id": "MDU6SXNzdWU4MjgzOTAzMzY=",
+      "title": "Including the client's ephemeral public key in the AAD precludes use of a single-shot HPKE API",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/397",
+      "state": "OPEN",
+      "author": "sftcd",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This isn't critical but I think it might be better to allow use of a single-shot HPKE API that doesn't need to first and separately generate a public/private pair before calling Seal(). The downside of forcing two HPKE calls is perhaps mostly that someone will be tempted to re-use that key pair for something else or a 2nd attempt with maybe bad effects. If someone ever did HPKE in h/w there might also be a security difference. \r\n\r\nI'm also not entirely sure what we're protecting by including that public value (\"enc\") in the AAD as well so that could be better documented at least, if we keep things as-is, but perhaps including that field is really a bit of overkill?",
+      "createdAt": "2021-03-10T22:01:59Z",
+      "updatedAt": "2021-03-23T19:24:55Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "A single-shot HPKE already isn't viable because of HRR. You need to keep the second HPKE context around in case you need to encrypt second ClientHello.\r\n\r\nThat said, I'm perfectly happy with omitting it. (Or including it.) This dates to https://github.com/tlswg/draft-ietf-tls-esni/pull/362 and https://github.com/tlswg/draft-ietf-tls-esni/issues/326. Of the added fields, `cipher_suite` and `enc` are already incorporated into HPKE itself anyway, so we shouldn't need to redo it in ECH.\r\n\r\nThat leaves `config_id`, which is... almost redundant.  It's part of ECHConfig which is already authenticated, *except* in the [optional-`config_id` mode](https://tlswg.org/draft-ietf-tls-esni/draft-ietf-tls-esni.html#name-optional-configuration-iden), where it is otherwise unauthenticated. But it's also ignored in that mode so...  \u00af\\\\\\_(\u30c4)\\_/\u00af",
+          "createdAt": "2021-03-11T00:46:30Z",
+          "updatedAt": "2021-03-11T00:47:05Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 11/03/2021 00:46, David Benjamin wrote:\n> A single-shot HPKE already isn't viable because of HRR. You need to\n> keep the second HPKE context around in case you need to encrypt\n> second ClientHello.\n\nI've not done anything specific yet wrt HRR, and I'm guessing\nthose details are still in-play to some extent, so not sure.\nBut yeah, if the 2nd CH has to use the same keying then that\nmay be the case.\n\n> That said, I'm perfectly happy with omitting it or including it. This\n> dates to https://github.com/tlswg/draft-ietf-tls-esni/pull/362 and\n> https://github.com/tlswg/draft-ietf-tls-esni/issues/326. Of the added\n> fields, `cipher_suite` and `enc` are already incorporated into HPKE\n> itself anyway, so we shouldn't need to redo it in ECH.\n\nI agree. If there's a good reason to include it in the AAD\nthat'd be fine, but I'm puzzled as to what that reason may\nbe.\n\nCheers,\nS.\n\n> \n> That leaves `config_id`, which is... almost redundant.  It's part of\n> ECHConfig which is already authenticated, *except* in the\n> [optional-`config_id`\n> mode](https://tlswg.org/draft-ietf-tls-esni/draft-ietf-tls-esni.html#name-optional-configuration-iden),\n> where it is otherwise unauthenticated. But it's also ignored so...\n> \u00af\\\\\\_(\u30c4)\\_/\u00af\n> \n\n\n",
+          "createdAt": "2021-03-11T11:43:55Z",
+          "updatedAt": "2021-03-11T11:43:55Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> That said, I'm perfectly happy with omitting it. (Or including it.) \r\n\r\n@davidben what is \"it\" here? The AAD? That seems orthogonal to whether or not the HPKE context (and shared KEM secret) are reused for CH2. ",
+          "createdAt": "2021-03-23T01:11:49Z",
+          "updatedAt": "2021-03-23T01:11:49Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Sorry, yeah, that was unclear. By \"it\" I mean `enc` in AAD.",
+          "createdAt": "2021-03-23T02:29:22Z",
+          "updatedAt": "2021-03-23T02:29:22Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "The reason to authenticate these things was to be as conservative as possible. Of course, we don't have any formal analysis that tells us whether or not it's strictly necessary. But given that single-shot HPKE isn't viable in this application, I'd suggest we keep it as-is. (Unless another reason to change this comes along :)",
+          "createdAt": "2021-03-23T19:24:55Z",
+          "updatedAt": "2021-03-23T19:24:55Z"
+        }
+      ]
+    },
+    {
+      "number": 398,
+      "id": "MDU6SXNzdWU4MjgzOTY3MzU=",
+      "title": "Is the outer compression really worthwhile?",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/398",
+      "state": "OPEN",
+      "author": "sftcd",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "(I'd suggest we resolve this issue after or with #378)\r\nHaving implemented it, I don't think the compression is worthwhile  and would be better omitted from the first RFC version of ECH. My reasons:\r\n- Needless complexity\r\n- it doesn't save enough to be worth it until there are some PQ KEMs (which is not today)\r\n- It adds a huge burden in testing if we want to be confident that no combination is problematic\r\n- There is no sensible way for a client to decide what to compress in general\r\n- The set of compressed or not things may be a new fingerprint \r\n- For OpenSSL, which supports custom extensions, it could be dangerous if there are extension handlers that interact\r\n- There isn't really a sensible api that a library could offer to generic client applications to control this in a useful and simple manner\r\n\r\nSo my suggestion: drop it entirely for now and consider again what to do once we have some PQ KEM that's too big and when we have some real experience with ECH. ",
+      "createdAt": "2021-03-10T22:08:35Z",
+      "updatedAt": "2021-03-23T19:49:00Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "sayrer",
+          "authorAssociation": "NONE",
+          "body": "> There is no sensible way for a client to decide what to compress in general\r\n\r\nIn Rustls, I've found that there are some extensions that depend only on the general configuration. The API has an \"extra_exts\" field for things actually supplied by the caller.\r\n\r\nhttps://github.com/ctz/rustls/blob/32a143fe7ff69c9f42ca2d42ec7b122e9667541c/rustls/src/client/hs.rs#L250\r\n",
+          "createdAt": "2021-03-10T22:46:50Z",
+          "updatedAt": "2021-03-10T22:47:20Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> it doesn't save enough to be worth it until there are some PQ KEMs (which is not today)\r\n\r\nThat's not entirely true. We have had code in BoringSSL for an experimental PQ KEM for some time. I would be very supportive of ideas to simplify it, but dropping it altogether would be a non-starter for us.\r\nhttps://www.imperialviolet.org/2018/04/11/pqconftls.html\r\nhttps://www.imperialviolet.org/2018/12/12/cecpq2.html\r\n\r\n> There is no sensible way for a client to decide what to compress in general\r\n\r\nI listed a couple likely strategies here:\r\nhttps://mailarchive.ietf.org/arch/msg/tls/dJemdTEuQxMMfxtqoU93NFd8W08/\r\n\r\n> For OpenSSL, which supports custom extensions, it could be dangerous if there are extension handlers that interact\r\n\r\nI think any custom extensions APIs will need to ponder what to do ECH no matter what. Even without compression, you fundamentally need to decide what you put in the outer vs. inner ClientHello on the client.\r\n\r\n* Is the ClientHello extension dependent on sensitive data? Put it in just the inner ClientHello.\r\n* Is the ClientHello extension is public and you want to your ECH/non-ECH wire images to match here? Put it in both.\r\n* Is it sensitive but you still want an outer value? The API will need to somehow construct both values and help the application process the server response correctly.\r\n* Is the application assuming that all handshakes are offered this extension? You'll need to put something in both, one way or another, since the server may handshake either ClientHello.\r\n\r\nNone of these decisions are related to compression. They're fundamental to the whole outer vs. inner ClientHello design of ECH.\r\n\r\nOnce you've made that decision, whether to compress follows naturally.\r\n\r\n* If you only put it in the inner ClientHello, this is moot.\r\n* If you put it in both and they were publicly equal, may as well compress it.\r\n* If you put it in both and they were not publicly equal, don't compress it.\r\n\r\nAs an aside, I don't think such custom extensions APIs are a good idea. There's no guarantee that future TLS versions won't change how extensions are used, which means they're very hard to make backwards-compatible. ECH changes extension-handling on the client, and TLS 1.3 changed it dramatically across the board.",
+          "createdAt": "2021-03-10T23:31:42Z",
+          "updatedAt": "2021-03-10T23:31:42Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> So my suggestion: drop it entirely for now and consider again what to do once we have some PQ KEM that's too big and when we have some real experience with ECH.\r\n\r\nI agree that it's not trivial, but we seem to have found a general design that works reasonably well. So putting aside the complexity (of implementation and testing) point temporarily, the other reasons listed seem to fall into one of three categories: YAGNI, library integration challenges (choosing what to compress, how to expose it, and how it interacts with custom extension handlers), and increased fingerprinting. \r\n\r\n1. YAGNI: David's comments and links to PQ KEMs coming down the pipe seem to suggest this isn't a case of YAGNI.\r\n2. Library integration: This seems mostly an issue for the library in question, and less so a problem that applies to all implementations. For example, not all TLS stacks have custom extension support anymore. (IIRC, BoringSSL had it at one point, but it was long ago removed. @davidben can confirm.) On the API point, too, it's not clear to me that exposing this as a general purpose API is something that stacks should do. Implementations can probably make reasonable decisions about what to compress and what not to compress, as David points out, without consulting the application.\r\n3. Increased fingerprinting: This is a good point, and something we specifically have in the TLS WG charter to as a goal to mitigate. \r\n\r\nGiven the above, would a reasonable (and simpler?) alternative be to *only* compress the key share extension?",
+          "createdAt": "2021-03-23T01:09:35Z",
+          "updatedAt": "2021-03-23T01:09:35Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Key share de-duplication will be essential, operationally. It also seems likely that the future will bring other extensions we will want to de-duplicate. In my view, the \"ech_outer_extensions\" mechanism needs to have as much generality as it currently supports. I'd be opening to re-designing it, if someone has a suggestion for a simpler design. However, the current mechanism has been through a few design cycles (e.g., https://github.com/tlswg/draft-ietf-tls-esni/issues/262), and it seems to work pretty well.\r\n\r\nIt's also important to note that the added complexity is optional. In my experience, the client bears most of the implementation complexity, since it must decide if/how to compress extensions. The server bits are fully specified and fairly straightforward to implement properly.\r\n",
+          "createdAt": "2021-03-23T19:20:09Z",
+          "updatedAt": "2021-03-23T19:20:09Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Indeed, and for the record, I'm happy to keep what we have now absent some other simplifying proposal. It works and is sufficiently general for future use cases. I merely offer an alternative for consideration if we want to remove generality. ",
+          "createdAt": "2021-03-23T19:49:00Z",
+          "updatedAt": "2021-03-23T19:49:00Z"
+        }
+      ]
+    },
+    {
+      "number": 399,
+      "id": "MDU6SXNzdWU4Mjg0MTU4Mjg=",
+      "title": "The serverhello.random trick is ugly and might interact with ticket handling...",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/399",
+      "state": "OPEN",
+      "author": "sftcd",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Encoding the \"ECH worked\" signal in the SH.random lower octets is, at best, ugly. It also arguably causes violation of internal API designs  in at least the OpenSSL code. And I'm not sure if there might be some interaction between that and ticket handling (just from the look of some code I've yet to understand really.)\r\n\r\nDo we really need such a hacky solution?  Given the ECH sticks out in the CH, we could just define a non-encrypted extension in the SH to include the confirmation value maybe (though even that is pretty hacky).\r\n ",
+      "createdAt": "2021-03-10T22:28:14Z",
+      "updatedAt": "2021-03-17T01:18:56Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I have some sympathy for this, but the point of this signal design was to make it difficult to distinguish GREASE from non-GREASE ECH.",
+          "createdAt": "2021-03-10T22:35:11Z",
+          "updatedAt": "2021-03-10T22:35:11Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Could you elaborate on the concern with ticket handling? I'm not sure I see how tickets would relate to this.",
+          "createdAt": "2021-03-10T23:34:29Z",
+          "updatedAt": "2021-03-10T23:34:29Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 10/03/2021 23:34, David Benjamin wrote:\n> Could you elaborate on the concern with ticket handling? I'm not sure\n> I see how tickets would relate to this.\n\nSorry for being slow - should get to looking again at that\nbit of code in a few days.\n\nS\n\n",
+          "createdAt": "2021-03-17T01:18:55Z",
+          "updatedAt": "2021-03-17T01:18:55Z"
+        }
+      ]
+    },
+    {
+      "number": 400,
+      "id": "MDU6SXNzdWU4Mjg0MTc0ODg=",
+      "title": "Hard to imagine ECH handling in constant time - ponder and document?",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/400",
+      "state": "OPEN",
+      "author": "sftcd",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Given all the complexity and options it's hard to imaging ECH handling ever being contstant-time. It'd probably be no harm to ponder that at least and maybe add some security considerations text before we're done.",
+      "createdAt": "2021-03-10T22:29:58Z",
+      "updatedAt": "2021-03-23T19:55:15Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "That seems like a fine thing to note in the security considerations. @sftcd, will you have cycles to prepare a PR?",
+          "createdAt": "2021-03-23T00:51:00Z",
+          "updatedAt": "2021-03-23T00:51:00Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "As long as the runtime doesn't depend on secrets, I don't see that this is an issue. I wonder, is constant-time handshaking (modulo secrets) a security consideration for TLS?",
+          "createdAt": "2021-03-23T19:33:38Z",
+          "updatedAt": "2021-03-23T19:33:38Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Well, I think the question is what do you want to protect in under the constant-time threat model. Certainly it'd be a disaster if ECH caused us to leak some values that TLS *already* considered secret under that model. We also shouldn't leak any cryptographic secrets like the ECH keys.\r\n\r\nAt the same time, the goal of ECH *is* to hide sensitive fields in the ClientHello, and we're definitely not meeting the constant-time threat model for those fields. I don't think this has anything to do with the complexity though. It just seems mostly implausible in the first place. It'd require you pick and handshake as your selected backend server, in time and memory access patterns independent of which backend server you chose.",
+          "createdAt": "2021-03-23T19:46:03Z",
+          "updatedAt": "2021-03-23T19:46:23Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "It's entirely possible for the runtime to vary based on the contents of the inner CH. Different domains may have different configurations (ciphersuites, signature algorithms, etc), and any variance caused by those may leak information. (This doesn't seem different from the fact that different configurations might also have on-the-wire differences [absent padding], so I'm comfortable just noting it.)",
+          "createdAt": "2021-03-23T19:47:41Z",
+          "updatedAt": "2021-03-23T19:47:41Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yup, exactly. I don't think meeting the constant-time threat model is plausible here.",
+          "createdAt": "2021-03-23T19:50:06Z",
+          "updatedAt": "2021-03-23T19:50:06Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 23/03/2021 19:47, Christopher Wood wrote:\n> It's entirely possible for the runtime to vary based on the contents\n> of the inner CH. Different domains may have different configurations\n> (ciphersuites, signature algorithms, etc), and any variance caused by\n> those may leak information. (This doesn't seem different from the\n> fact that different configurations might also have on-the-wire\n> differences [absent padding], so I'm comfortable just noting it.)\n\nYeah, I think that's the best we may be able to do.\n\nTiming will almost certainy reveal whether we're dealing\nwith a shared or split mode case so that likely deserves\nto be noted.\n\nHowever, I think it'd be worth thinking a little about\nwhether timing could fingerprint a set of inner CH choices,\nand whether that in turn could reveal e.g. inner.SNI in\nsome cases, if the inner CH for very few names used some\nrare combination of choices.\n\nPeople do seem to get rather smart about such things over\ntime;-)\n\nCheers,\nS.\n\n\n",
+          "createdAt": "2021-03-23T19:55:15Z",
+          "updatedAt": "2021-03-23T19:55:15Z"
+        }
+      ]
+    },
+    {
+      "number": 401,
+      "id": "MDU6SXNzdWU4Mjg0MTkwNjM=",
+      "title": "ECH complexity",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/401",
+      "state": "OPEN",
+      "author": "sftcd",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [
+        "pre-wglc"
+      ],
+      "body": "Overall, having implemented and gotten interop for draft-09, ECH is very complex. This issue just requests people consider whether or not there are ways to simplify ECH given the TLS WG plan to have a bunch of interim meetings on the topic. I'd hope that now we have 3 or 4 implementations it might be possible to see ways to make 'em usefully simpler, if that's possible.",
+      "createdAt": "2021-03-10T22:31:36Z",
+      "updatedAt": "2021-03-23T00:50:21Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Thanks for flagging! I'm tagging this as something to keep open up and top of mind as we progress towards something shippable. When all other issues are resolved and we can't figure out how to make things simpler, it's probably time to close this.",
+          "createdAt": "2021-03-23T00:50:18Z",
+          "updatedAt": "2021-03-23T00:50:18Z"
+        }
+      ]
+    },
+    {
+      "number": 402,
+      "id": "MDU6SXNzdWU4MzE0NTYwNzc=",
+      "title": "Not all of CHOuter is authenticated",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/402",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The position of the ECH extension is not authenticated as part of ClientHelloOuterAAD.  This means that it is possible to construct multiple different ClientHello messages that will all be accepted.\r\n\r\nThis probably isn't that interesting, but it might be worth noting.",
+      "createdAt": "2021-03-15T06:10:38Z",
+      "updatedAt": "2021-03-23T21:39:08Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "If we want to fix this (I don't care either way), we can remove the fields prepended to ClientHelloOuterAAD, leave the ECH extension in, and say the AAD is computed by replacing ClientECH.payload with the empty string.",
+          "createdAt": "2021-03-15T15:09:51Z",
+          "updatedAt": "2021-03-15T15:10:08Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "That seems like a reasonable proposal. @martinthomson, what do you think? (@sftcd might also have thoughts on this.)",
+          "createdAt": "2021-03-23T00:47:44Z",
+          "updatedAt": "2021-03-23T00:47:56Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I can live with either a placeholder or text in the draft that explains the limitation.  Extension order doesn't carry any semantics, so I don't see malleability as a real risk.  I'd lean toward the placeholder, but only slightly.  More so if we were planning to change the AAD anyway.",
+          "createdAt": "2021-03-23T02:31:31Z",
+          "updatedAt": "2021-03-23T02:31:31Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "This seems like a good idea to me.",
+          "createdAt": "2021-03-23T21:39:07Z",
+          "updatedAt": "2021-03-23T21:39:07Z"
+        }
+      ]
+    },
+    {
+      "number": 403,
+      "id": "MDU6SXNzdWU4MzE0NTg5MDE=",
+      "title": "public_name and maximum_name_length could be smaller",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/403",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "I think that we're committed now to public_name being a DNS name (there is no way to indicate the type of name (like in RFC 6066).  So I have to assume that the only type of name that is permitted is a DNS name.  And a DNS name can't be longer the 255 bytes.\r\n\r\nTherefore, ECHConfig could be:\r\n\r\n```tls\r\n    struct {\r\n        HpkeKeyConfig key_config;\r\n        uint8 maximum_name_length;\r\n        opaque public_name<1..255>;\r\n        Extension extensions<0..2^16-1>;\r\n    } ECHConfigContents;\r\n```",
+      "createdAt": "2021-03-15T06:15:07Z",
+      "updatedAt": "2021-03-23T21:38:18Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "This seems like a sensible change.",
+          "createdAt": "2021-03-23T21:38:18Z",
+          "updatedAt": "2021-03-23T21:38:18Z"
+        }
+      ]
+    },
+    {
+      "number": 404,
+      "id": "MDU6SXNzdWU4Mzg4NzE2ODM=",
+      "title": "[Question] Is there any public-facing setups that currently support ECH?",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/404",
+      "state": "CLOSED",
+      "author": "cujof",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Hello. Thank you for your work on ESNI/ECH.\r\n\r\nWith ECH gaining momentum, are there any public functional sites that publish `echconfig` via DNS and able to perform TLS handshake with ECH? I see Firefox already adding ECH support, but I haven't found any site where I can do testing. Please share this information (if there are any).",
+      "createdAt": "2021-03-23T15:54:09Z",
+      "updatedAt": "2021-03-23T16:39:14Z",
+      "closedAt": "2021-03-23T16:39:14Z",
+      "comments": [
+        {
+          "author": "TheDGOfficial",
+          "authorAssociation": "NONE",
+          "body": "Only Cloudflare and Firefox currently, however, they use old draft version\nas far as I know.\n\nYou can check it from these sites:\n\nhttps://www.cloudflare.com/ssl/encrypted-sni/\n\nhttps://esnicheck.com/\n\nIt will be implemented on all major web browsers and servers once the draft\nis finalized I think.\n",
+          "createdAt": "2021-03-23T16:08:03Z",
+          "updatedAt": "2021-03-23T16:08:03Z"
+        },
+        {
+          "author": "cujof",
+          "authorAssociation": "NONE",
+          "body": "Thanks for quick reply! Well, encrypted SNI (ESNI, older drafts) is very different from ECH (current). That old Cloudflare ESNI checker based on DNS `_esni.*` TXT records. That concept was abandoned in favor of encrypting ClientHello using `echconfig` retrieved from DNS. But I see in TLSWG mailing list message from Stephen Farrell:\r\n\r\n> I've just got my OpenSSL code \"working\" for draft-09. \r\nThe s_client and s_server talk to one another and do \r\nECH; NSS's tstclnt talks to my s_server and does ECH \r\nand my s_client talks to **cloudflare's test server** and \r\ndoes ECH. \r\n\r\nSo at least Cloudflare has a testing server, would be great to know which exactly.",
+          "createdAt": "2021-03-23T16:17:09Z",
+          "updatedAt": "2021-03-23T16:17:09Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 23/03/2021 16:17, Filip wrote:\n> So at least Cloudflare has a testing server, would be great to know which exactly.\n\nIt's crypto.cloudflare.com\n\nI just re-tested with my s_client and that seems to\nstill be running draft-09. That should change to\ndraft-10 (a breaking change) sometime soon, but we\nprobably need to wait for CF to say when and if they\nare going to use the same name.\n\nCheers,\nS.\n\n\n",
+          "createdAt": "2021-03-23T16:27:13Z",
+          "updatedAt": "2021-03-23T16:27:13Z"
+        },
+        {
+          "author": "cujof",
+          "authorAssociation": "NONE",
+          "body": "@sftcd, thank you very much, sir!\r\n\r\nI think this issue is resolved.",
+          "createdAt": "2021-03-23T16:39:14Z",
+          "updatedAt": "2021-03-23T16:39:14Z"
+        }
+      ]
+    },
+    {
+      "number": 405,
+      "id": "MDU6SXNzdWU4NDEyMzIxODQ=",
+      "title": "public_name edge cases and client checks",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/405",
+      "state": "OPEN",
+      "author": "davidben",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Some edge cases around the public_name:\r\n\r\n1. What if the public name is some random string which is not a valid DNS name? (What's the right terminology here? Same from RFC6066?) Does the client reject the ECHConfig? My feeling is yes. Imagine you have some random service accessible on a private address. Today, it can assume it'll never see `\\\"\\r\\n;DROP TABLES` in the server_name field. Even if an attacker pointed `evil.example` at that private address, the attacker is constrained by valid DNS strings. But the public name is never directly queried in DNS.\r\n\r\n2. Is a server deployment allowed to use an IP certificate for the ECH rejection identity? (That was actually the original idea for the fallback flow.) If so, how do they specify it? Do they use the ASCII serialization of the IPv4 or IPv6 address? Note that IP addresses do not go in server name, so the client would need to recognize this and leave server_name empty.\r\n\r\n@dmcardle ",
+      "createdAt": "2021-03-25T19:14:10Z",
+      "updatedAt": "2021-03-30T13:45:35Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I imagined the outer name would be set from the config similar to how an application sets the inner name. That is, one provides a string to `set_server_name(char *)` and, internally, the library determines whether or not that string is a valid domain name (and thus goes in the server name) or is an IP address (and thus is used to verify the IP-based cert that might come back from the server). ASCII serialization of addresses seems fine here, if one just takes that string and passes it to the `set_server_name(char *)` function (or equivalent). ",
+          "createdAt": "2021-03-30T13:45:35Z",
+          "updatedAt": "2021-03-30T13:45:35Z"
+        }
+      ]
+    },
+    {
+      "number": 406,
+      "id": "MDU6SXNzdWU4NDEyMzgzMTg=",
+      "title": "Server enforcement of ClientHelloInner invariants",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/406",
+      "state": "OPEN",
+      "author": "davidben",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We currently have a number of invariants on the ClientHelloInner that the client must follow:\r\n\r\n* ClientHelloInner must include ech_is_inner\r\n* ClientHelloInner may not offer TLS 1.2 and below\r\n* ClientHelloInner may not include encrypted_client_hello (somewhat implicit from the first rule and section 7)\r\n\r\nBut, syntactically, the client could violate this. How is the server expected to respond? In particular, a shared mode server directly observes all invariants, and it seems a little weird to ask it to send something it knows is inconsistent. But if we say to enforce, we either have a shared/split difference, or we put all the enforcement at the client-facing server (not wrong...) because the backend server doesn't have enough information to check these.\r\n\r\n* If ClientHelloInner lacks ech_is_inner, should the server just accept ECH without reporting the confirmation signal, or should it report an error?\r\n* If we end up negotiating TLS 1.2 with ClientHelloInner, is that an error or do we just proceed, without reporting the confirmation signal and sending a cleartext certificate?\r\n* If ClientHelloInner contains another encrypted_client_hello extension, one possible implementation strategy would report retry keys, since backend server halves that see encrypted_client_hello typically assume the extension wasn't decrypted. Is that correct, or do you omit retry keys?\r\n\r\n@dmcardle ",
+      "createdAt": "2021-03-25T19:22:53Z",
+      "updatedAt": "2021-03-25T22:25:39Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "These are just bugs in the client, so I have no qualms with requiring the server to reject the connection when it can.  A split mode server might not see all of this.  If the fronting server fails to validate the inner CH, all of this might slip through.  Especially when the backend isn't able to require ECH on every connection, which seems plausible.\r\n\r\nSo I think we're OK with hard rejection.  Failure here in shared mode requires client bugs and the shared mode server can report those.  Failure in split mode might not always be detected, but it requires the same client bugs and a lack of diligence on the part of the fronting server (for this to be detectable, ech_is_inner is all they need to check).",
+          "createdAt": "2021-03-25T22:25:39Z",
+          "updatedAt": "2021-03-25T22:25:39Z"
+        }
+      ]
+    },
+    {
+      "number": 408,
+      "id": "MDU6SXNzdWU4NDM1NjA5NzI=",
+      "title": "Early data and ClientHelloOuter interaction",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/408",
+      "state": "OPEN",
+      "author": "davidben",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Here's a fun case. Suppose the client talks to a 0-RTT-capable, ECH-capable server. It'll send early_data + pre_shared_key in ClientHelloInner, wrap that in _some_ ClientHelloOuter, and follow it up with early data records.\r\n\r\nNow the server rejects ECH and handshakes with the ClientHelloOuter. But the client has already sent early data, so the server needs to know to skip past it. I believe this means we need to require the client mirror ClientHelloInner.early_data in ClientHelloOuter, even though it's not actually offering to resume anything. Sending early_data without pre_shared_key is slightly weird (if tolerated at all), so we might even want to recommend a fake outer pre_shared_key.\r\n\r\nWe _almost_ don't care about this: the client may as well stop the handshake at server Finished and skip the client Finished flight anyway, for purposes of the recovery flow. However:\r\n\r\n* What's not what the draft currently says\r\n* If the server rejects ECH, handshakes with ClientHelloOuter, *and* sends HelloRetryRequest, we do care about the client's second flight getting through.\r\n\r\nThat second case is extra fun because the client-facing server must look for the second ClientHello too.",
+      "createdAt": "2021-03-29T16:45:44Z",
+      "updatedAt": "2021-03-30T13:56:56Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> Sending early_data without pre_shared_key is slightly weird (if tolerated at all), so we might even want to recommend a fake outer pre_shared_key.\r\n\r\nWasn't this already the outcome from #384? (That is, if the inner CH has a PSK, then the outer one ought have a dummy PSK, too.) \r\n\r\nAs for mirroring early_data, why can the server not just ignore the application data (as if it received early_data and decided to ignore it)? Taking a quick look back at RFC8446, the server behavior where clients send application data without early_data is not defined, so are you concerned about that, or something else?\r\n\r\n",
+          "createdAt": "2021-03-30T13:56:55Z",
+          "updatedAt": "2021-03-30T13:56:55Z"
         }
       ]
     }
@@ -35701,24 +36302,26 @@
       "id": "MDExOlB1bGxSZXF1ZXN0NTczNzUzNDM0",
       "title": "Truncate the config_id to a single byte.",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/381",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "chris-wood",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Closes #379.\r\n\r\ncc @davidben, @martinthomson, @cjpatton, @cbartle891, @ekr ",
       "createdAt": "2021-02-15T19:28:35Z",
-      "updatedAt": "2021-03-08T16:47:16Z",
+      "updatedAt": "2021-03-08T19:01:12Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "caw/config_id-to-key_id",
       "baseRefOid": "ce8a04539acf0655a87ed57aa422c795aa8c6fd6",
       "headRepository": "tlswg/draft-ietf-tls-esni",
       "headRefName": "caw/short-id",
       "headRefOid": "85db0c01e55e72c782dbfce9e5841c71bdb349b0",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2021-03-08T19:01:12Z",
+      "mergedAt": "2021-03-08T19:01:12Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "cb7fbc6110fafca4094e50427a8e77c0137c104b"
+      },
       "comments": [
         {
           "author": "ekr",
@@ -35842,18 +36445,33 @@
       "labels": [],
       "body": "This PR aims to resolve the discussion in issue #354 by:\r\n\r\n1. clarifying goals/non-goals for \"don't stick out\"; and\r\n2. creating a TODO for a future experiment that assesses the deployability of the GREASE extension.\r\n\r\nDealing with PSK sticking out has been assigned to #384.",
       "createdAt": "2021-02-15T21:35:45Z",
-      "updatedAt": "2021-03-05T19:10:48Z",
+      "updatedAt": "2021-03-18T19:50:34Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
-      "baseRefOid": "c1a3d71f20f6fa69da00fa5ee7fa1a11abc291de",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "cjpatton/draft-ietf-tls-esni",
       "headRefName": "dont-stick-out",
-      "headRefOid": "30e22a2d4096854138fee6d6852c2445994e4060",
+      "headRefOid": "630d8fffa82d3ac89a44708984b6af2473acc533",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Rebased on top of ECH-10 changes -- addressing @ekr's comments next.",
+          "createdAt": "2021-03-18T18:30:19Z",
+          "updatedAt": "2021-03-18T18:30:19Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@ekr, this is ready for your second pass. I took your suggestion of substantially reducing the amount of text. It should be a bit more concise and to the point, if less precise.\r\n\r\n> In addition, I wouldn't frame GREASE as an experimental method. It's a permanent feature.\r\n\r\nI didn't mean to frame GREASE this way. Can you be more specific about how the text frames it this way?",
+          "createdAt": "2021-03-18T19:44:34Z",
+          "updatedAt": "2021-03-18T19:44:34Z"
+        }
+      ],
       "reviews": [
         {
           "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NTkwNzY5MTQ0",
@@ -35871,7 +36489,7 @@
               "originalPosition": 93,
               "body": "Is this an open issue in the sense that the data from that experiment needs to be in this draft? If not, I'm not sure it should be mentioned here.\r\n\r\nEDIT: Never mind, I see that you mention the experiment later. This seems like material for a different draft? Like, about the ramifications of implementations? Or rationale for the design?",
               "createdAt": "2021-02-15T21:45:54Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -35904,31 +36522,31 @@
               "originalPosition": 138,
               "body": "This isn't clear to me. I'd just leave this as an open issue without a decision one way or the other.\r\n\r\n```suggestion\r\n   #<new issue ID>, this may be mitigated with a future change.]]\r\n```",
               "createdAt": "2021-02-16T23:19:49Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 117,
               "body": "```suggestion\r\nwhether the attacker is passive or active (see {{goals}}).\r\n```\r\n\r\nI'd suggest dropping this unless we can point to some evidence. Maybe @davidben has one?",
               "createdAt": "2021-02-16T23:20:32Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 93,
               "body": "I think the point is that we will first run an experiment -- before this document is published as an RFC -- and then update this text with the results. Perhaps this helps?\r\n\r\n```suggestion\r\nthe protocol and measuring its impact. [[TODO: Document results from preliminary experiment that\r\n```",
               "createdAt": "2021-02-16T23:23:00Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 7,
               "body": "Let's revert this. We don't yet have consensus as to whether or not we want (or need) to mitigate this particular differentiator. (Please also file a separate issue focused specifically on this issue that we can use to track discussion!)",
               "createdAt": "2021-02-16T23:24:04Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 7,
               "body": "(#354 seems too generic to be useful for converging on consensus here, I think.)",
               "createdAt": "2021-02-16T23:24:46Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -35948,7 +36566,7 @@
               "originalPosition": 93,
               "body": "Yup, that's what I mean!",
               "createdAt": "2021-02-17T15:49:52Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -35968,7 +36586,7 @@
               "originalPosition": 117,
               "body": "There are some amazing examples [here](https://mailarchive.ietf.org/arch/msg/tls/i9blmvG2BEPf1s1OJkenHknRw9c/):\r\n> We found that Firepower middleboxes in \"Decrypt - Resign\" mode\r\nterminate TLS connections, but do not send a compliant ClientHello:\r\nThey modify the original ClientHello to remove unknown ciphersuites,\r\nEMS, and NPN, but incorrectly forward most other fields from the\r\noriginal ClientHello, including unknown extensions (supported_versions\r\nand key_shares), and the client random. This breaks TLS 1.3 servers.\r\nAdditionally, these devices forward the server random rather than\r\ngenerating their own (which will break when deploying the TLS 1.3\r\nanti-downgrade feature), and forward unknown signature algorithms\r\n(which will break when deploying, e.g., Ed25519).\r\n",
               "createdAt": "2021-02-18T19:44:38Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -35988,7 +36606,7 @@
               "originalPosition": 7,
               "body": "Done. I also added a reference to #384.",
               "createdAt": "2021-02-18T19:46:12Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -36008,7 +36626,7 @@
               "originalPosition": 117,
               "body": "Can we just cite this email? That would be fine for me!",
               "createdAt": "2021-02-18T19:52:00Z",
-              "updatedAt": "2021-02-18T19:58:15Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -36041,7 +36659,7 @@
               "originalPosition": 117,
               "body": "Cited references in Section D.4 of RFC 8446.",
               "createdAt": "2021-02-18T20:00:23Z",
-              "updatedAt": "2021-02-18T20:00:23Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             }
           ]
         },
@@ -36061,31 +36679,131 @@
               "originalPosition": 84,
               "body": "```suggestion\r\n({{real-ech}}) without protecting the client hello.\r\n```",
               "createdAt": "2021-03-05T18:50:06Z",
-              "updatedAt": "2021-03-05T18:56:58Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 87,
               "body": "I'm not sure I think of this so much as a measurement thing but rather as an anti-ossification measure.",
               "createdAt": "2021-03-05T18:50:31Z",
-              "updatedAt": "2021-03-05T18:56:58Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 113,
               "body": "I would remove everything between \"This strategy is...\" and here.",
               "createdAt": "2021-03-05T18:52:33Z",
-              "updatedAt": "2021-03-05T18:56:58Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 92,
               "body": "```suggestion\r\nossification is to make the use of GREASE ECH widespread, thus disincentivizing filtering of the ECH extension by passive attackers.\r\n```",
               "createdAt": "2021-03-05T18:53:53Z",
-              "updatedAt": "2021-03-05T18:56:58Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
             },
             {
               "originalPosition": 123,
               "body": "I would also remove this paragraph.",
               "createdAt": "2021-03-05T18:54:27Z",
-              "updatedAt": "2021-03-05T18:56:59Z"
+              "updatedAt": "2021-03-18T19:40:52Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjE1NzgzNDA3",
+          "commit": {
+            "abbreviatedOid": "dbdcb68"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-18T19:19:04Z",
+          "updatedAt": "2021-03-18T19:19:04Z",
+          "comments": [
+            {
+              "originalPosition": 84,
+              "body": "I think this suggestion makes the text less clear.",
+              "createdAt": "2021-03-18T19:19:04Z",
+              "updatedAt": "2021-03-18T19:40:52Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjE1Nzk3OTI0",
+          "commit": {
+            "abbreviatedOid": "dbdcb68"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-18T19:29:04Z",
+          "updatedAt": "2021-03-18T19:29:05Z",
+          "comments": [
+            {
+              "originalPosition": 92,
+              "body": "Changed as follows:\r\n> Thus, our strategy for mitigating network ossification is to deploy GREASE ECH widely enough to disincentivize    differential treatment of the real ECH protocol by the network.",
+              "createdAt": "2021-03-18T19:29:04Z",
+              "updatedAt": "2021-03-18T19:40:52Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjE1ODA3MzI2",
+          "commit": {
+            "abbreviatedOid": "dbdcb68"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-18T19:40:55Z",
+          "updatedAt": "2021-03-18T19:40:56Z",
+          "comments": [
+            {
+              "originalPosition": 123,
+              "body": "Done.",
+              "createdAt": "2021-03-18T19:40:55Z",
+              "updatedAt": "2021-03-18T19:40:56Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjE1ODA3NDk1",
+          "commit": {
+            "abbreviatedOid": "dbdcb68"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-18T19:41:08Z",
+          "updatedAt": "2021-03-18T19:41:09Z",
+          "comments": [
+            {
+              "originalPosition": 113,
+              "body": "Done.",
+              "createdAt": "2021-03-18T19:41:08Z",
+              "updatedAt": "2021-03-18T19:41:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjE1ODA4NzI3",
+          "commit": {
+            "abbreviatedOid": "630d8ff"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-18T19:42:47Z",
+          "updatedAt": "2021-03-18T19:42:47Z",
+          "comments": [
+            {
+              "originalPosition": 87,
+              "body": "The point I was trying to make about measurement is that we have no idea how deployable GREASE ECH is today.",
+              "createdAt": "2021-03-18T19:42:47Z",
+              "updatedAt": "2021-03-18T19:42:47Z"
             }
           ]
         }
@@ -36680,6 +37398,227 @@
       "headRefName": "hrr-inner",
       "headRefOid": "bcb679661d6a96aeddc45391e43c133c3507b3a6",
       "closedAt": "2021-03-05T18:43:42Z",
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 394,
+      "id": "MDExOlB1bGxSZXF1ZXN0NTg3MDI0NTc2",
+      "title": "Retarget #384",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/394",
+      "state": "MERGED",
+      "author": "chris-wood",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "#384 accidentally targeted an older branch that was since merged into master. This just takes the same change and redirects it to the main branch.",
+      "createdAt": "2021-03-08T19:03:33Z",
+      "updatedAt": "2021-03-08T19:04:08Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "afbc388c8e49902ccc932b53c15a40b2cf3d3ac9",
+      "headRepository": "tlswg/draft-ietf-tls-esni",
+      "headRefName": "caw/config_id-to-key_id",
+      "headRefOid": "cb7fbc6110fafca4094e50427a8e77c0137c104b",
+      "closedAt": "2021-03-08T19:04:07Z",
+      "mergedAt": "2021-03-08T19:04:07Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "034403dc826ac5b90db5f531839cf98f62d7a7f3"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 407,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjAxMTY2NTk1",
+      "title": "Define HelloRetryRequestInner/Outer messages",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/407",
+      "state": "OPEN",
+      "author": "cjpatton",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Solves #233, #373, #358, and #333 and closes #374.\r\n\r\nThe design is based on @davidben's sketch.\r\n",
+      "createdAt": "2021-03-25T23:32:17Z",
+      "updatedAt": "2021-03-30T02:02:40Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "cjpatton/draft-ietf-tls-esni",
+      "headRefName": "hrr-inner",
+      "headRefOid": "bf2a4a192e15517496ec6dc9edd142cfffcd334a",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIzNzM2NDUx",
+          "commit": {
+            "abbreviatedOid": "bf2a4a1"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "PENDING",
+          "body": "",
+          "createdAt": "2021-03-29T23:50:06Z",
+          "updatedAt": "2021-03-29T23:50:06Z",
+          "comments": [
+            {
+              "originalPosition": 91,
+              "body": "```suggestion\r\nAs described in {{server-hrr}, the HelloRetryRequestInner handshake message is\r\n```\r\nHmm... I wonder why CI didn't complain?",
+              "createdAt": "2021-03-29T23:50:06Z",
+              "updatedAt": "2021-03-29T23:50:06Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIyNTQyMjE5",
+          "commit": {
+            "abbreviatedOid": "afd182f"
+          },
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-03-26T21:22:11Z",
+          "updatedAt": "2021-03-26T21:22:56Z",
+          "comments": [
+            {
+              "originalPosition": 74,
+              "body": "\r\n```suggestion\r\nAs described in {{server-hrr}}, if the server has accepted ECH but needs to send\r\nan HRR then it will be carried in an encrypted HRR value in an \"encrypted_client_hello\" extension\r\ninside an outer HRR.\r\nIf the server sends a HelloRetryRequest (HRR) in response to the ClientHello,\r\n```",
+              "createdAt": "2021-03-26T21:22:11Z",
+              "updatedAt": "2021-03-26T21:30:51Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIyNTk5NDQy",
+          "commit": {
+            "abbreviatedOid": "bf2a4a1"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-27T00:28:07Z",
+          "updatedAt": "2021-03-27T00:28:08Z",
+          "comments": [
+            {
+              "originalPosition": 227,
+              "body": "The usual way an HRR is constructed?",
+              "createdAt": "2021-03-27T00:28:07Z",
+              "updatedAt": "2021-03-27T00:28:08Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIyNjAzMDU5",
+          "commit": {
+            "abbreviatedOid": "bf2a4a1"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-27T00:56:31Z",
+          "updatedAt": "2021-03-27T00:56:32Z",
+          "comments": [
+            {
+              "originalPosition": 91,
+              "body": "s/sever/server/",
+              "createdAt": "2021-03-27T00:56:31Z",
+              "updatedAt": "2021-03-27T00:56:32Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIzNzY5MzMz",
+          "commit": {
+            "abbreviatedOid": "bf2a4a1"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-30T01:22:06Z",
+          "updatedAt": "2021-03-30T01:22:06Z",
+          "comments": [
+            {
+              "originalPosition": 235,
+              "body": "(This is a note not just about this PR but the document in general.) I'm finding it confusing for all the client behavior discussed in one section and the server behavior discussed in another. I'm bouncing back and forth from one to the other to get the actual ordering of the series of events. Would it not be less confusing to put things in that order than to describe all the client behavior and then all the server behavior?",
+              "createdAt": "2021-03-30T01:22:06Z",
+              "updatedAt": "2021-03-30T01:22:06Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIzNzgxODY3",
+          "commit": {
+            "abbreviatedOid": "bf2a4a1"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-30T01:58:10Z",
+          "updatedAt": "2021-03-30T01:58:10Z",
+          "comments": [
+            {
+              "originalPosition": 127,
+              "body": "> (i.e., the \"ech_outer_extensions\" extension is not used)\r\n\r\nWhy is this?",
+              "createdAt": "2021-03-30T01:58:10Z",
+              "updatedAt": "2021-03-30T01:58:10Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjIzNzgzNDMy",
+          "commit": {
+            "abbreviatedOid": "bf2a4a1"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-30T02:02:39Z",
+          "updatedAt": "2021-03-30T02:02:40Z",
+          "comments": [
+            {
+              "originalPosition": 139,
+              "body": "> if the client did not offer ECH in the first ClientHello, then it MUST NOT not offer ECH in the second.\r\n\r\nIs this no longer true? If not, why not? If it is still true, did this get moved somewhere else? ",
+              "createdAt": "2021-03-30T02:02:40Z",
+              "updatedAt": "2021-03-30T02:02:40Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 409,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjAzODMwMDQ1",
+      "title": "Compress ECHConfigContents.",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/409",
+      "state": "OPEN",
+      "author": "chris-wood",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Closes #403.\r\n\r\ncc @martinthomson ",
+      "createdAt": "2021-03-30T14:00:54Z",
+      "updatedAt": "2021-03-30T14:00:54Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "tlswg/draft-ietf-tls-esni",
+      "headRefName": "caw/compress-ech-config",
+      "headRefOid": "888b9fe8057d11ae36741a6919d59d54058ec396",
+      "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
