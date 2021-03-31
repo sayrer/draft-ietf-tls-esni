@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 1 October 2021                                           Fastly
+Expires: 2 October 2021                                           Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                           30 March 2021
+                                                           31 March 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 October 2021.
+   This Internet-Draft will expire on 2 October 2021.
 
 Copyright Notice
 
@@ -1013,15 +1013,16 @@ Table of Contents
    checks that the message includes the "ech_is_inner" extension, omits
    the "encrypted_client_hello" extension, and does not offer TLS 1.2 or
    below versions.  If any of these checks fails, the client-facing
-   server MUST abort with an "illegal_parameter" alert.  If these checks
-   succeed, the client-facing server then forwards the ClientHelloInner
-   to the appropriate backend server, which proceeds as in Section 7.2.
-   If the backend server responds with a HelloRetryRequest, the client-
-   facing server forwards it, decrypts the client's second
-   ClientHelloOuter using the procedure in Section 7.1.1, and forwards
-   the resulting second ClientHelloInner.  The client-facing server
-   forwards all other TLS messages between the client and backend server
-   unmodified.
+   server MUST abort with an "illegal_parameter" alert.
+
+   If these checks succeed, the client-facing server then forwards the
+   ClientHelloInner to the appropriate backend server, which proceeds as
+   in Section 7.2.  If the backend server responds with a
+   HelloRetryRequest, the client-facing server forwards it, decrypts the
+   client's second ClientHelloOuter using the procedure in
+   Section 7.1.1, and forwards the resulting second ClientHelloInner.
+   The client-facing server forwards all other TLS messages between the
+   client and backend server unmodified.
 
    Otherwise, if all candidate ECHConfig values fail to decrypt the
    extension, the client-facing server MUST ignore the extension and
