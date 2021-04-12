@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 9 September 2021                                         Fastly
+Expires: 14 October 2021                                          Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                            8 March 2021
+                                                           12 April 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 9 September 2021.
+   This Internet-Draft will expire on 14 October 2021.
 
 Copyright Notice
 
@@ -1010,10 +1010,16 @@ Table of Contents
    iterating over the candidate ECHConfig values.
 
    Upon determining the ClientHelloInner, the client-facing server then
-   forwards the ClientHelloInner to the appropriate backend server,
-   which proceeds as in Section 7.2.  If the backend server responds
-   with a HelloRetryRequest, the client-facing server forwards it,
-   decrypts the client's second ClientHelloOuter using the procedure in
+   checks that the message includes the "ech_is_inner" extension, omits
+   the "encrypted_client_hello" extension, and does not offer TLS 1.2 or
+   below versions.  If any of these checks fails, the client-facing
+   server MUST abort with an "illegal_parameter" alert.
+
+   If these checks succeed, the client-facing server then forwards the
+   ClientHelloInner to the appropriate backend server, which proceeds as
+   in Section 7.2.  If the backend server responds with a
+   HelloRetryRequest, the client-facing server forwards it, decrypts the
+   client's second ClientHelloOuter using the procedure in
    Section 7.1.1, and forwards the resulting second ClientHelloInner.
    The client-facing server forwards all other TLS messages between the
    client and backend server unmodified.
@@ -1684,9 +1690,9 @@ Table of Contents
    [HTTPS-RR] Schwartz, B., Bishop, M., and E. Nygren, "Service binding
               and parameter specification via the DNS (DNS SVCB and
               HTTPS RRs)", Work in Progress, Internet-Draft, draft-ietf-
-              dnsop-svcb-https-03, 17 February 2021,
+              dnsop-svcb-https-04, 17 March 2021,
               <https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-
-              svcb-https-03.txt>.
+              svcb-https-04.txt>.
 
    [I-D.ietf-tls-exported-authenticator]
               Sullivan, N., "Exported Authenticators in TLS", Work in
