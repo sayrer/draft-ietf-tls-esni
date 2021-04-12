@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2021-03-31T20:28:25.536915+00:00",
+  "timestamp": "2021-04-12T20:21:45.535346+00:00",
   "repo": "tlswg/draft-ietf-tls-esni",
   "labels": [
     {
@@ -9383,7 +9383,7 @@
       "labels": [],
       "body": "Encoding the \"ECH worked\" signal in the SH.random lower octets is, at best, ugly. It also arguably causes violation of internal API designs  in at least the OpenSSL code. And I'm not sure if there might be some interaction between that and ticket handling (just from the look of some code I've yet to understand really.)\r\n\r\nDo we really need such a hacky solution?  Given the ECH sticks out in the CH, we could just define a non-encrypted extension in the SH to include the confirmation value maybe (though even that is pretty hacky).\r\n ",
       "createdAt": "2021-03-10T22:28:14Z",
-      "updatedAt": "2021-03-30T21:09:27Z",
+      "updatedAt": "2021-04-01T23:07:54Z",
       "closedAt": null,
       "comments": [
         {
@@ -9413,6 +9413,20 @@
           "body": "Just to synchronize the discussion across list/GitHub a bit, this was discussed a bit in https://mailarchive.ietf.org/arch/msg/tls/pBjQDWT4ZvkATFKZ04rKZQ6Zvi4/. I agree with @sftcd now that there's some fiddly interactions from two ClientHellos and ServerHello.\r\n\r\nI sketched out a possible change sketched out in https://mailarchive.ietf.org/arch/msg/tls/gpVj4FSmHQ2XQTKpQY07IDcD40I/. We could compute ClientHelloInner...ServerHelloECHConf as in the draft right now. But then rather than feed that into the handshake secret computation, just rely on that transcript containing a secret ClientHello.random and computing F(transcript). (Hash it down, KDF it with zero secret, whatever.)\r\n\r\nOne observation is that, while this relies oddly on a secret ClientHello.random, the existing construction does too. An attacker constructing a ServerHello gets to pick ServerHello.key_share and, with knowledge of ClientHello.key_share, compute the resulting shared secret.",
           "createdAt": "2021-03-30T21:09:07Z",
           "updatedAt": "2021-03-30T21:09:27Z"
+        },
+        {
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "One further observation here is that if the client uses the same shares for CHInner and CHOuter, the double key derivation piece doesn't really need to apply.",
+          "createdAt": "2021-04-01T19:10:06Z",
+          "updatedAt": "2021-04-01T19:10:06Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "For my own reference, I just wanted to flag something that we've discussed on the list: the current acceptance signal interacts with PSK in a way that could easily cause a bug in an implementation that hasn't carefully vetted this interaction.",
+          "createdAt": "2021-04-01T23:07:54Z",
+          "updatedAt": "2021-04-01T23:07:54Z"
         }
       ]
     },
@@ -9638,7 +9652,7 @@
       "labels": [],
       "body": "Hello. Thank you for your work on ESNI/ECH.\r\n\r\nWith ECH gaining momentum, are there any public functional sites that publish `echconfig` via DNS and able to perform TLS handshake with ECH? I see Firefox already adding ECH support, but I haven't found any site where I can do testing. Please share this information (if there are any).",
       "createdAt": "2021-03-23T15:54:09Z",
-      "updatedAt": "2021-03-23T16:39:14Z",
+      "updatedAt": "2021-04-06T16:16:53Z",
       "closedAt": "2021-03-23T16:39:14Z",
       "comments": [
         {
@@ -9668,6 +9682,13 @@
           "body": "@sftcd, thank you very much, sir!\r\n\r\nI think this issue is resolved.",
           "createdAt": "2021-03-23T16:39:14Z",
           "updatedAt": "2021-03-23T16:39:14Z"
+        },
+        {
+          "author": "cujof",
+          "authorAssociation": "NONE",
+          "body": "@sftcd just in case you are interested in more sites for testing: take a look at HTTPS RRs of these sites:\r\n\r\n* app-site-association.g.aaplimg.com\r\n* clientflow.g.aaplimg.com\r\n* pancake.g.aaplimg.com\r\n\r\nIn `svcparams` they have key `key32768` which seems to be the replacement for `echconfig` in Apple's experiments with ECH. Google knows nothing about that key. ",
+          "createdAt": "2021-04-06T16:16:30Z",
+          "updatedAt": "2021-04-06T16:16:53Z"
         }
       ]
     },
@@ -9683,7 +9704,7 @@
       "labels": [],
       "body": "Some edge cases around the public_name:\r\n\r\n1. What if the public name is some random string which is not a valid DNS name? (What's the right terminology here? Same from RFC6066?) Does the client reject the ECHConfig? My feeling is yes. Imagine you have some random service accessible on a private address. Today, it can assume it'll never see `\\\"\\r\\n;DROP TABLES` in the server_name field. Even if an attacker pointed `evil.example` at that private address, the attacker is constrained by valid DNS strings. But the public name is never directly queried in DNS.\r\n\r\n2. Is a server deployment allowed to use an IP certificate for the ECH rejection identity? (That was actually the original idea for the fallback flow.) If so, how do they specify it? Do they use the ASCII serialization of the IPv4 or IPv6 address? Note that IP addresses do not go in server name, so the client would need to recognize this and leave server_name empty.\r\n\r\n@dmcardle ",
       "createdAt": "2021-03-25T19:14:10Z",
-      "updatedAt": "2021-03-31T17:29:31Z",
+      "updatedAt": "2021-04-03T14:36:31Z",
       "closedAt": null,
       "comments": [
         {
@@ -9797,6 +9818,55 @@
           "body": "Hi folks, PR #413 is a little more complete now, if you get a chance :)",
           "createdAt": "2021-03-31T17:08:26Z",
           "updatedAt": "2021-03-31T17:29:31Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> Technically couldn't DNS logic validate the DNS name in the ECHConfig?\r\n\r\nTo close the loop on this: it could, but we're treating the ECH parts of SVCB as opaque to DNS. [edit: I miswrote \"opaque to TLS\" at first] I think that's desirable because TLS may introduce new ECH extensions or ECH versions that the DNS stack may not be aware of. Also, any validation on the URL parsing / DNS query path happens in the process of making a request to the DNS server at all, whereas any validation here would be a check afterwards on the result. Whatever we do, it'll end up looking like someone, DNS or TLS, implementing a check we need to write down.",
+          "createdAt": "2021-04-01T14:54:58Z",
+          "updatedAt": "2021-04-01T14:59:43Z"
+        },
+        {
+          "author": "bemasc",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> 2\\. Is a server deployment allowed to use an IP certificate for the ECH rejection identity? (That was actually the original idea for the fallback flow.) If so, how do they specify it? Do they use the ASCII serialization of the IPv4 or IPv6 address? Note that IP addresses do not go in server name, so the client would need to recognize this and leave server_name empty.\r\n\r\nTo come back to this: because SNI does not support IP addresses, IP certs must be the server's default-cert, i.e. they must be served to requests that omit the SNI.  Thus, we merely need a way to tell clients to omit `ClientHelloOuter.server_name`.\r\n\r\nMy suggestion is to allow `ECHConfigContents.public_name` to be empty, meaning \"omit outer SNI\".",
+          "createdAt": "2021-04-01T18:23:37Z",
+          "updatedAt": "2021-04-01T18:23:37Z"
+        },
+        {
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Keeping in mind that the client uses `public_name` to authenticate the server's `retry_configs`, the client now needs to be aware of which IP address it's connecting to. I suppose this isn't a protocol concern, but it's more ergonomic when the ECHConfig contains all the information TLS needs to do ECH.",
+          "createdAt": "2021-04-01T18:54:04Z",
+          "updatedAt": "2021-04-01T18:54:04Z"
+        },
+        {
+          "author": "bemasc",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "OK.  As I mentioned yesterday, I think `public_name` should probably be an X.509 [`GeneralName`](https://tools.ietf.org/html/rfc5280#section-4.2.1.6).",
+          "createdAt": "2021-04-02T15:31:46Z",
+          "updatedAt": "2021-04-02T15:31:46Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I do not think GeneralName will work. There's somewhat a mismatch between what the application thinks of as identities and how those identities are encoded into X.509. GeneralName is part of the latter. What does a browser certificate verifier, which only believes in things that fit in a URL, do if it's told the identity is now an EDIPartyName? What SNI, etc., does that translate into, given that our identity-to-TLS-config algorithm takes an HTTPS origin, not an X.509 name? (Note that the type field in SNI is fiction. There is and will be [only one name type](https://mailarchive.ietf.org/arch/msg/tls/1t79gzNItZd71DwwoaqcQQ_4Yxc/).)\r\n\r\nMore importantly, this glomming too many things into an already overloaded issue. If you want to pursue this, can you please fork GeneralName into a separate topic? The status quo in the existing text is that the public name is clearly only good for DNS or DNS+IP, depending on how much you believe in URL syntax. We already have a need to better specify that case, including client validation. Let's fix that, and then we can separate tackle more complex cases.",
+          "createdAt": "2021-04-02T16:06:54Z",
+          "updatedAt": "2021-04-02T16:10:29Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 02/04/2021 16:32, Benjamin M. Schwartz wrote:\n> OK.  As I mentioned yesterday, I think `public_name` should probably\n> be an X.509\n> [`GeneralName`](https://tools.ietf.org/html/rfc5280#section-4.2.1.6).\n\nStrongly disagree. GeneralName was a reasonable guess at a\nthing to do 20 years ago but is no longer a structure that\nought be leveraged - we have no need for EDI nor X.400 names\nfor ECH and even tempting someone to write code for ORAddress\nhandling is risky - there's >1 can of worms there all of\nwhich are best avoided.\n\nS.\n\n",
+          "createdAt": "2021-04-02T17:57:00Z",
+          "updatedAt": "2021-04-02T17:57:00Z"
+        },
+        {
+          "author": "richsalz",
+          "authorAssociation": "NONE",
+          "body": "Agree with Stephen. Using GeneralName is like hunting butterflies with an elephant gun. :)",
+          "createdAt": "2021-04-03T14:36:31Z",
+          "updatedAt": "2021-04-03T14:36:31Z"
         }
       ]
     },
@@ -9805,15 +9875,15 @@
       "id": "MDU6SXNzdWU4NDEyMzgzMTg=",
       "title": "Server enforcement of ClientHelloInner invariants",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/406",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "davidben",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "We currently have a number of invariants on the ClientHelloInner that the client must follow:\r\n\r\n* ClientHelloInner must include ech_is_inner\r\n* ClientHelloInner may not offer TLS 1.2 and below\r\n* ClientHelloInner may not include encrypted_client_hello (somewhat implicit from the first rule and section 7)\r\n\r\nBut, syntactically, the client could violate this. How is the server expected to respond? In particular, a shared mode server directly observes all invariants, and it seems a little weird to ask it to send something it knows is inconsistent. But if we say to enforce, we either have a shared/split difference, or we put all the enforcement at the client-facing server (not wrong...) because the backend server doesn't have enough information to check these.\r\n\r\n* If ClientHelloInner lacks ech_is_inner, should the server just accept ECH without reporting the confirmation signal, or should it report an error?\r\n* If we end up negotiating TLS 1.2 with ClientHelloInner, is that an error or do we just proceed, without reporting the confirmation signal and sending a cleartext certificate?\r\n* If ClientHelloInner contains another encrypted_client_hello extension, one possible implementation strategy would report retry keys, since backend server halves that see encrypted_client_hello typically assume the extension wasn't decrypted. Is that correct, or do you omit retry keys?\r\n\r\n@dmcardle ",
       "createdAt": "2021-03-25T19:22:53Z",
-      "updatedAt": "2021-03-25T22:25:39Z",
-      "closedAt": null,
+      "updatedAt": "2021-04-12T20:21:28Z",
+      "closedAt": "2021-04-12T20:21:28Z",
       "comments": [
         {
           "author": "martinthomson",
@@ -9836,7 +9906,7 @@
       "labels": [],
       "body": "Here's a fun case. Suppose the client talks to a 0-RTT-capable, ECH-capable server. It'll send early_data + pre_shared_key in ClientHelloInner, wrap that in _some_ ClientHelloOuter, and follow it up with early data records.\r\n\r\nNow the server rejects ECH and handshakes with the ClientHelloOuter. But the client has already sent early data, so the server needs to know to skip past it. I believe this means we need to require the client mirror ClientHelloInner.early_data in ClientHelloOuter, even though it's not actually offering to resume anything. Sending early_data without pre_shared_key is slightly weird (if tolerated at all), so we might even want to recommend a fake outer pre_shared_key.\r\n\r\nWe _almost_ don't care about this: the client may as well stop the handshake at server Finished and skip the client Finished flight anyway, for purposes of the recovery flow. However:\r\n\r\n* What's not what the draft currently says\r\n* If the server rejects ECH, handshakes with ClientHelloOuter, *and* sends HelloRetryRequest, we do care about the client's second flight getting through.\r\n\r\nThat second case is extra fun because the client-facing server must look for the second ClientHello too.",
       "createdAt": "2021-03-29T16:45:44Z",
-      "updatedAt": "2021-03-30T17:50:54Z",
+      "updatedAt": "2021-03-31T20:49:16Z",
       "closedAt": null,
       "comments": [
         {
@@ -9880,6 +9950,20 @@
           "body": "> We could, but then it'd break the nice property that a plain RFC8446 server will handshake ClientHelloOuter without any fuss. This property is great for rollback safety. (Otherwise any ECH server deployment needs to be two-stage, and introduces a lower bound that you cannot rollback beyond.) And elsewhere we've tried to avoid contradicting RFC8446.\r\n\r\nI'm not sure why ignoring stuff is fuss. What's the alternative? To terminate the handshake if the server receives early data? Wouldn't that be more fuss?\r\n\r\nIf RFC8446 doesn't specify what to do in this situation, I'm not sure why specifying it is in *contradiction* to RFC8446 (as opposed to expanding on it).",
           "createdAt": "2021-03-30T17:50:53Z",
           "updatedAt": "2021-03-30T17:50:53Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I think RFC8446 does say what to do in this situation. Section 5.2 says at the bottom:\r\n>    If the decryption fails, the receiver MUST terminate the connection\r\n>   with a \"bad_record_mac\" alert.\r\n\r\nhttps://tools.ietf.org/html/rfc8446#section-5.2\r\n\r\nThe default for the record layer is that decryption errors are fatal (as it should be). Early data skipping is an exception to this described in section 4.2.10, and the exception only applies when the server declines an early_data extension.\r\n\r\n> I'm not sure why ignoring stuff is fuss. What's the alternative? To terminate the handshake if the server receives early data? Wouldn't that be more fuss?\r\n\r\nOh no, the goal is to ignore stuff. That's what makes the recovery flow work. The issue is that, in RFC8446, servers only ignore the early data *if there was an early_data extension in ClientHello which they declined*. Otherwise, it's just a fatal decryption error. In order to meet that condition, ClientHelloOuter needs the early_data extension whenever ClientHelloInner does.",
+          "createdAt": "2021-03-31T20:42:13Z",
+          "updatedAt": "2021-03-31T20:42:13Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "ACK -- thanks for closing the loop! ",
+          "createdAt": "2021-03-31T20:49:16Z",
+          "updatedAt": "2021-03-31T20:49:16Z"
         }
       ]
     },
@@ -36707,7 +36791,7 @@
       "labels": [],
       "body": "This PR aims to resolve the discussion in issue #354 by:\r\n\r\n1. clarifying goals/non-goals for \"don't stick out\"; and\r\n2. creating a TODO for a future experiment that assesses the deployability of the GREASE extension.\r\n\r\nDealing with PSK sticking out has been assigned to #384.",
       "createdAt": "2021-02-15T21:35:45Z",
-      "updatedAt": "2021-03-18T19:50:34Z",
+      "updatedAt": "2021-04-02T00:05:26Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
@@ -37068,6 +37152,19 @@
               "updatedAt": "2021-03-18T19:42:47Z"
             }
           ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2NzIwNDU4",
+          "commit": {
+            "abbreviatedOid": "630d8ff"
+          },
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "LGTM",
+          "createdAt": "2021-04-02T00:05:26Z",
+          "updatedAt": "2021-04-02T00:05:26Z",
+          "comments": []
         }
       ]
     },
@@ -38079,7 +38176,7 @@
       "labels": [],
       "body": "Closes #403.\r\n\r\ncc @martinthomson ",
       "createdAt": "2021-03-30T14:00:54Z",
-      "updatedAt": "2021-03-30T18:59:52Z",
+      "updatedAt": "2021-04-02T00:14:18Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
@@ -38144,6 +38241,45 @@
           "createdAt": "2021-03-30T18:59:52Z",
           "updatedAt": "2021-03-30T18:59:52Z",
           "comments": []
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1ODUyODUz",
+          "commit": {
+            "abbreviatedOid": "888b9fe"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-01T02:22:55Z",
+          "updatedAt": "2021-04-01T02:22:55Z",
+          "comments": []
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1ODY5OTQz",
+          "commit": {
+            "abbreviatedOid": "888b9fe"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Easy.  Thanks.\r\n\r\nGood to see at least some of the problems of RFC 6066 aren't going to continue here.",
+          "createdAt": "2021-04-01T03:16:56Z",
+          "updatedAt": "2021-04-01T03:16:56Z",
+          "comments": []
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2NzIyODA1",
+          "commit": {
+            "abbreviatedOid": "888b9fe"
+          },
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "LGTM",
+          "createdAt": "2021-04-02T00:14:18Z",
+          "updatedAt": "2021-04-02T00:14:18Z",
+          "comments": []
         }
       ]
     },
@@ -38159,7 +38295,7 @@
       "labels": [],
       "body": "Closes #402.",
       "createdAt": "2021-03-30T14:57:10Z",
-      "updatedAt": "2021-03-30T19:49:43Z",
+      "updatedAt": "2021-04-02T00:13:36Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
@@ -38170,7 +38306,15 @@
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Having looked at this, I have a preference for a construction where the outer ClientHello has a placeholder with empty extension data, rather than a placeholder that has an empty payload field.\r\n\r\nZeroing out the payload field is not easier in our implementation.  It is somewhat more difficult to implement.\r\n\r\nThis is a preference only; anything can be implemented.  But this version is preferable.",
+          "createdAt": "2021-04-01T03:15:52Z",
+          "updatedAt": "2021-04-01T03:22:00Z"
+        }
+      ],
       "reviews": [
         {
           "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI0NDE2ODE1",
@@ -38304,6 +38448,39 @@
               "updatedAt": "2021-03-30T19:49:43Z"
             }
           ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1ODUyNjMy",
+          "commit": {
+            "abbreviatedOid": "3859b4a"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-01T02:22:13Z",
+          "updatedAt": "2021-04-01T02:22:13Z",
+          "comments": []
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2NzIyNTg2",
+          "commit": {
+            "abbreviatedOid": "3859b4a"
+          },
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-04-02T00:13:36Z",
+          "updatedAt": "2021-04-02T00:13:36Z",
+          "comments": [
+            {
+              "originalPosition": 8,
+              "body": "I think I'm in favor of this PR as-is but I don't feel strongly.",
+              "createdAt": "2021-04-02T00:13:36Z",
+              "updatedAt": "2021-04-02T00:13:36Z"
+            }
+          ]
         }
       ]
     },
@@ -38312,24 +38489,26 @@
       "id": "MDExOlB1bGxSZXF1ZXN0NjA0MTA0OTc1",
       "title": "Validate the contents of ClientHelloInner.",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/411",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "chris-wood",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Closes #406.",
       "createdAt": "2021-03-30T17:09:43Z",
-      "updatedAt": "2021-03-31T20:28:01Z",
+      "updatedAt": "2021-04-12T20:21:28Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "tlswg/draft-ietf-tls-esni",
       "headRefName": "caw/validate-ch-inner",
       "headRefOid": "7f9be69c301ca6b61579225081f1d97b07d0f8a3",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2021-04-12T20:21:28Z",
+      "mergedAt": "2021-04-12T20:21:28Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "e3c5d038f78be784e85ccaa47963a4f397d230ea"
+      },
       "comments": [],
       "reviews": [
         {
@@ -38397,6 +38576,19 @@
               "updatedAt": "2021-03-31T20:28:01Z"
             }
           ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1ODUyMzU3",
+          "commit": {
+            "abbreviatedOid": "7f9be69"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-01T02:21:18Z",
+          "updatedAt": "2021-04-01T02:21:18Z",
+          "comments": []
         }
       ]
     },
@@ -38410,15 +38602,15 @@
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
-      "body": "Fixes #405",
+      "body": "[Edit: deleted \"Fixes\" line for #405]",
       "createdAt": "2021-03-30T18:57:08Z",
-      "updatedAt": "2021-03-31T20:28:12Z",
+      "updatedAt": "2021-04-12T19:41:18Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "dmcardle/draft-ietf-tls-esni",
       "headRefName": "dan-public-name-edge-cases",
-      "headRefOid": "db4dded68bb1b02dcdf06d0cfeec404182cc766d",
+      "headRefOid": "1bfd934f46d0da48d1f074b7e1fcd05879c5deeb",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -38500,9 +38692,166 @@
           "body": "@sftcd Right, I think it's unambiguous, whatever we do with IP addresses, they won't go in ClientHelloOuter.server_name. Any use of this, if we want it, would be for public name verification, not the server_name value. See my comment above with how to think about public_name.",
           "createdAt": "2021-03-31T20:12:17Z",
           "updatedAt": "2021-03-31T20:12:33Z"
+        },
+        {
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "SGTM, folks. Just dropped the parts about IP addresses.",
+          "createdAt": "2021-03-31T20:28:49Z",
+          "updatedAt": "2021-03-31T20:28:49Z"
+        },
+        {
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Looks like I was a little overzealous removing the IP address text.\r\n\r\nWe still need to check that public_name is not an IPv4 address because dotted-decimal IPv4 addresses would slip through the cracks of hostname validation. This is bad because a malicious/misconfigured DNS would cause the ECH client to break [RFC6066](https://tools.ietf.org/html/rfc6066#section-3)'s rule on the contents of \"server_name\":\r\n\r\n> Literal IPv4 and IPv6 addresses are not permitted in \"HostName\".\r\n\r\n(Re-added this IPv4 check in the last commit.)",
+          "createdAt": "2021-04-01T14:17:12Z",
+          "updatedAt": "2021-04-01T14:17:12Z"
+        },
+        {
+          "author": "richsalz",
+          "authorAssociation": "NONE",
+          "body": "I would rather make \"validate the host name\" be a SHOULD and remove all these requirements.",
+          "createdAt": "2021-04-01T14:21:29Z",
+          "updatedAt": "2021-04-01T14:21:29Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "ECH implementations not validating that string risks surprising behavior for a lot of applications, and potentially more attack surface to private services than before. Have you looked at the discussion in issue #405, in particular:\r\n\r\n> Current TLS stacks don't seem to check, on either side. (At least OpenSSL and its major forks)\r\n\r\nSadly, the thing that makes that work (logic earlier in the application) doesn't apply here. See https://github.com/tlswg/draft-ietf-tls-esni/issues/405#issuecomment-810496976",
+          "createdAt": "2021-04-01T14:57:44Z",
+          "updatedAt": "2021-04-01T14:58:11Z"
+        },
+        {
+          "author": "richsalz",
+          "authorAssociation": "NONE",
+          "body": "> ECH implementations not validating that string risks surprising behavior for a lot of applications, and potentially more attack surface to private services than before.\r\n\r\nCan you explain your concerns in more detail?\r\n\r\nI think the application should be responsible for validation.",
+          "createdAt": "2021-04-01T15:20:03Z",
+          "updatedAt": "2021-04-01T15:20:03Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> I think the application should be responsible for validation.\r\n\r\nThe application should never see the value of ECHConfig.public_name, right?",
+          "createdAt": "2021-04-01T15:21:38Z",
+          "updatedAt": "2021-04-01T15:21:38Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> Can you explain your concerns in more detail?\r\n\r\nSee #405, specifically https://github.com/tlswg/draft-ietf-tls-esni/issues/405#issue-841232184 and https://github.com/tlswg/draft-ietf-tls-esni/issues/405#issuecomment-810430589/\r\n\r\n>> I think the application should be responsible for validation.\r\n>\r\n> The application should never see the value of ECHConfig.public_name, right?\r\n\r\nWell, there are several things going on here:\r\n\r\nFirst, different systems may differently divide the \"TLS\" part and the \"application\" part. The spec mostly captures behavior of the overall client system, because that's all we can usefully talk about. (For example, ECH specifies a retry flow that involves making a new connection. At the level of many TLS libraries, including OpenSSL + derivatives, the caller makes connections. So instead the TLS library can expose APIs and document the caller's responsibilities as part of enabling ECH. Other interfaces may be create their own connections and handle this internally.) So whether it's the application or TLS, at the implementation level, isn't a hard deciding factor.\r\n\r\nSecond, with that said, yes, I expect that the majority of TLS <-> application interfaces will treat the ECHConfigList as an opaque blob. That is a good division of responsibilities because the TLS half already needs to process individual ECHConfigs in the ECHConfigList and select one based on its internal capabilities. Having to thread through application-specific DNS validation seems like it'd be complex. (But this is just my view as an implementor. The spec merely describes the overall behavior of the client system. How you choose to layer it is an implementation decision.)\r\n\r\nFinally, there's the question of whether TLS as a spec should have opinions here or if it should punt to some upper layer spec profile, as we did with 0-RTT. I don't think that's warranted here. RFC6066 already decided what can go in server_name, so TLS already is plenty opinionated on the shape of strings meant to be DNS names.\r\n\r\nThus, IMO, the simplest and most practical story is to have TLS handle this, rather than thread it up through all the layers.",
+          "createdAt": "2021-04-01T15:46:53Z",
+          "updatedAt": "2021-04-01T15:46:53Z"
+        },
+        {
+          "author": "richsalz",
+          "authorAssociation": "NONE",
+          "body": "I am willing to accept that I am in the rough here.",
+          "createdAt": "2021-04-01T16:10:28Z",
+          "updatedAt": "2021-04-01T16:10:28Z"
+        },
+        {
+          "author": "bemasc",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "As noted in https://github.com/tlswg/draft-ietf-tls-esni/issues/405#issuecomment-812088744, I don't think we should be putting IP addresses in `public_name`.",
+          "createdAt": "2021-04-01T18:28:31Z",
+          "updatedAt": "2021-04-01T18:28:31Z"
+        },
+        {
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "In the interest of dealing with one problem at a time, this PR no longer attempts to spell out how to recognize IP addresses. \r\n\r\nRoughly:\r\n\r\n* The client MUST validate `public_name` as a LDH hostname.\r\n* The client SHOULD exclude IP address literals, which may come in many strange forms, or else it may send a non-compliant \"server_name\" extension.\r\n\r\nIf we care to make excluding IP addresses a MUST, let's work out the details in another PR. Same goes for if we want to explicitly support IP address literals \u2014\u00a0we still need to validate them to protect server applications from receiving IP addresses in non-standard notations, e.g. octal.",
+          "createdAt": "2021-04-02T18:53:11Z",
+          "updatedAt": "2021-04-02T18:53:11Z"
+        },
+        {
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I think there are a couple things going on here:\r\n\r\n1. ECHConfig.public_name, as currently written, is described as what goes in CHOuter.server_name. That wasn't right and we should have made it outer reference identity. I believe @chris-wood is going to do a separate PR after this goes through.\r\n\r\n2. SNI or reference identity, we need to define what the type of the thing that goes in ECHConfig.public_name and what validation the client does. In particular, without validation, it gives the network more control over what goes into CHOuter.server_name than would otherwise be the case. Normally, in a typical HTTPS client, TLS can just assume the hostname has passed whatever checks earlier in the stack (URL parsing, DNS lookup, etc.) and so checks in TLS are not load-bearing. The public name breaks this because the TLS layer is fabricating a hostname on its own. So we should have TLS validate it before running too far with it.\r\n\r\nThis PR addresses (2).",
+          "createdAt": "2021-04-12T19:41:18Z",
+          "updatedAt": "2021-04-12T19:41:18Z"
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NjkyMDQx",
+          "commit": {
+            "abbreviatedOid": "db4dded"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "This seems like it would prohibit _service.name. @huitema, @DavidSchinazi: would this be a problem for the DNS-SD case?",
+          "createdAt": "2021-03-31T20:30:23Z",
+          "updatedAt": "2021-03-31T20:45:45Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "```suggestion\r\nstructure with a `public_name` that fails validation. To validate, the\r\n```",
+              "createdAt": "2021-03-31T20:30:23Z",
+              "updatedAt": "2021-04-05T14:56:50Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI3NDgwOTEy",
+          "commit": {
+            "abbreviatedOid": "2267782"
+          },
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-03T19:23:03Z",
+          "updatedAt": "2021-04-03T19:25:25Z",
+          "comments": [
+            {
+              "originalPosition": 8,
+              "body": "Perhaps rephrasing this slightly as:\r\n\r\n> This value MUST NOT begin or end with an ASCII dot and MUST be parsable as a dot-separated sequence of LDH labels, as defined in {{RFC5980}}, Section 2.3.1. Clients MUST ignore any ECHConfig structure whose public_name does not meet this criteria.\r\n\r\nThis way we capture both sender and receiver rules.",
+              "createdAt": "2021-04-03T19:23:03Z",
+              "updatedAt": "2021-04-05T14:56:50Z"
+            },
+            {
+              "originalPosition": 14,
+              "body": "Man, this IP address thing is a mess. The SHOULD makes me sad, but I don't have a clear alternate suggestion. I can see not wanting to tie to the slightly odd \"first-match-wins\" parse from URLs. (And then there's the mess that is URL parsing...) Although, amusingly, RFC6066 section 3 clearly assumes that we have somehow defined this in a TLS-compatible way, but it forgot to cite anything. :-(\r\n\r\nI dunno, I'll defer to others on the exact wording here. @martinthomson, what do you think?\r\n\r\nEither way, I'm on board with dealing with one problem at a time in this PR.",
+              "createdAt": "2021-04-03T19:23:34Z",
+              "updatedAt": "2021-04-05T14:56:50Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI3OTAxNTcx",
+          "commit": {
+            "abbreviatedOid": "1ddccd3"
+          },
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-04-05T14:52:27Z",
+          "updatedAt": "2021-04-05T14:52:27Z",
+          "comments": [
+            {
+              "originalPosition": 8,
+              "body": "That's better, thanks.",
+              "createdAt": "2021-04-05T14:52:27Z",
+              "updatedAt": "2021-04-05T14:56:50Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2NTc2MTU4",
+          "commit": {
+            "abbreviatedOid": "ed80728"
+          },
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "High-level, I think that we need to agree on what this value is *for* first.\r\n\r\nEditorially, I think that this text needs more space to move.  Trying to cram all this stuff into a single paragraph isn't doing us any favours.  Make a new section for this.  It's certainly important enough to do properly.\r\n\r\nMy sense is that the right answer to the underlying issues is that this is a reference identity rather than something we put in server_name in ClientHelloOuter.\r\n\r\nIn that case, the fallback is achieved by establishing a connection and validating that the entity providing the updated configuration is able to answer for this reference identity.  You then construct ClientHelloOuter in such a way as to ensure that you are able to successfully connect to that reference identity if ClientHelloInner cannot be accepted.\r\n\r\nIf this is just a name, then this is over-specified.  If the goal is to describe what goes in ClientHelloOuter server_name, none of the validation is necessary.  If the server wants you to put junk in the field, then I don't see how that junk would be any more identifying than an identifying DNS name.  You really only need special IP address rules if you intend for this to be a reference identity.",
+          "createdAt": "2021-04-01T19:18:11Z",
+          "updatedAt": "2021-04-06T02:18:27Z",
+          "comments": []
+        }
+      ]
     },
     {
       "number": 414,
@@ -38516,13 +38865,13 @@
       "labels": [],
       "body": "Closes #384.\r\nThis may also be useful for #408.\r\n\r\n@davidben, do let me know if this PR overloads the term \"GREASE\" in a way that you find to be inaccurate or not in the GREASE spirit :) I'm perfectly happy to call it something else.",
       "createdAt": "2021-03-30T19:24:22Z",
-      "updatedAt": "2021-03-31T20:25:48Z",
+      "updatedAt": "2021-04-01T17:12:09Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "cjpatton/draft-ietf-tls-esni",
       "headRefName": "dummy-psk",
-      "headRefOid": "9a642b8bed755a6ed052b6b878a3516184e249ff",
+      "headRefOid": "bc98c900de208b4d37bc2b0251062ce74f56c2c9",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -38545,29 +38894,492 @@
               "originalPosition": 6,
               "body": "```suggestion\r\n   SHOULD also include a GREASE \"pre_shared_key\" extension in ClientHelloOuter,\r\n```\r\n(to match the section title below)",
               "createdAt": "2021-03-30T21:59:40Z",
-              "updatedAt": "2021-03-30T22:07:46Z"
+              "updatedAt": "2021-04-01T17:12:09Z"
             },
             {
               "originalPosition": 23,
               "body": "```suggestion\r\nthe ClientHelloOuter. However, the client can send a \"pre_shared_key\" extension in the\r\nClientHelloInner. In this case, when resuming a session with the client, the backend \r\nserver sends a \"pre_shared_key\" extension in its ServerHello. This would\r\n```",
               "createdAt": "2021-03-30T22:04:14Z",
-              "updatedAt": "2021-03-30T22:07:46Z"
+              "updatedAt": "2021-04-01T17:12:09Z"
             },
             {
               "originalPosition": 26,
               "body": "```suggestion\r\n{{RFC8446}}. Sending a GREASE \"pre_shared_key\" extension in the ClientHelloOuter\r\n```",
               "createdAt": "2021-03-30T22:04:29Z",
-              "updatedAt": "2021-03-30T22:07:46Z"
+              "updatedAt": "2021-04-01T17:12:09Z"
             },
             {
               "originalPosition": 23,
               "body": "(proposed simplification to focus on only extension solicitation violation, rather than on cover traffic, which is the main motivation for this change.)",
               "createdAt": "2021-03-30T22:06:23Z",
-              "updatedAt": "2021-03-30T22:07:47Z"
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1Njg1NjAy",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T20:22:00Z",
+          "updatedAt": "2021-03-31T20:29:43Z",
+          "comments": [
+            {
+              "originalPosition": 32,
+              "body": "s/unsinged/unsigned/",
+              "createdAt": "2021-03-31T20:22:00Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            },
+            {
+              "originalPosition": 34,
+              "body": "Suppose the client does this, and then the server sends a ServerHello that claims to handshake with this PSK against ClientHelloOuter. What happens?\r\n\r\n(This probably should be an error, i.e. the client should act as if it didn't offer PSKs. But it's ambiguous enough that we should write it down.)",
+              "createdAt": "2021-03-31T20:23:43Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            },
+            {
+              "originalPosition": 30,
+              "body": "As @kaduk pointed out to me recently, TLS 1.3 actually forbids sending pre_shared_keys without psk_key_exchange_modes and even mandates the server enforce this. If we're going to start patching in individual fields, we probably need to say that too.\r\nhttps://tools.ietf.org/html/rfc8446#section-4.2.9",
+              "createdAt": "2021-03-31T20:25:48Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            },
+            {
+              "originalPosition": 23,
+              "body": "+1. #408 would be another example of a non-cover-traffic motivation which is actually about the real server and not network observers. Worrying about cover traffic suggests needing a threat model and such. The threat model for this is especially weird because the cover traffic can be distinguished with an active client probe:\r\n\r\n1. Observe a ClientHello with (possibly GREASE) ECH and (possibly GREASE) PSK.\r\n2. Call the client's bluff and construct a ServerHello that attempts to resume the PSK.\r\n3. See if the client rejects the message.",
+              "createdAt": "2021-03-31T20:29:37Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1Njk2Mjk4",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T20:35:50Z",
+          "updatedAt": "2021-03-31T20:35:51Z",
+          "comments": [
+            {
+              "originalPosition": 30,
+              "body": "\ud83e\udd26 sigh, yeah. ",
+              "createdAt": "2021-03-31T20:35:50Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1Njk2NDMw",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T20:36:00Z",
+          "updatedAt": "2021-03-31T20:36:01Z",
+          "comments": [
+            {
+              "originalPosition": 32,
+              "body": "```suggestion\r\nwith the same length. It also generates a random, 32-bit, unsigned integer to\r\n```",
+              "createdAt": "2021-03-31T20:36:00Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1Njk3Nzg1",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T20:37:52Z",
+          "updatedAt": "2021-03-31T20:37:52Z",
+          "comments": [
+            {
+              "originalPosition": 34,
+              "body": "Good point -- I think noting this as an error and failing the handshake seems good enough. ",
+              "createdAt": "2021-03-31T20:37:52Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzM4MDAw",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T21:34:38Z",
+          "updatedAt": "2021-03-31T21:34:38Z",
+          "comments": [
+            {
+              "originalPosition": 23,
+              "body": "Done.",
+              "createdAt": "2021-03-31T21:34:38Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzQwMTk4",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T21:38:13Z",
+          "updatedAt": "2021-03-31T21:38:13Z",
+          "comments": [
+            {
+              "originalPosition": 34,
+              "body": "Added this line below:\r\n\r\n> If the server replies with a \"pre_shared_key\" extension in its SeverHello, then\r\n> the client MUST abort the handshake with a \"handshake_failure\" alert.",
+              "createdAt": "2021-03-31T21:38:13Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzQwNzA1",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T21:39:06Z",
+          "updatedAt": "2021-03-31T21:39:06Z",
+          "comments": [
+            {
+              "originalPosition": 32,
+              "body": "Sure, if you like that kind of thing. I prefer my integers to be unsinged.",
+              "createdAt": "2021-03-31T21:39:06Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzQxNDg5",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T21:40:25Z",
+          "updatedAt": "2021-03-31T21:40:25Z",
+          "comments": [
+            {
+              "originalPosition": 30,
+              "body": "Yeah, I noticed that too. I guess I sort of thought this would be implied, but being explicit about it seems like a good idea. ",
+              "createdAt": "2021-03-31T21:40:25Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzQ0MDI3",
+          "commit": {
+            "abbreviatedOid": "9a642b8"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T21:44:39Z",
+          "updatedAt": "2021-03-31T21:44:39Z",
+          "comments": [
+            {
+              "originalPosition": 30,
+              "body": "The client now MUST copy \"psk_key_exchange_modes\" from CHInner into CHOuter.",
+              "createdAt": "2021-03-31T21:44:39Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzUwNjE2",
+          "commit": {
+            "abbreviatedOid": "7fa0355"
+          },
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T21:55:46Z",
+          "updatedAt": "2021-03-31T21:55:47Z",
+          "comments": [
+            {
+              "originalPosition": 34,
+              "body": "Minor nitpick: Probably \"unsupported_extension\" or \"illegal_parameter\". \"handshake_failure\" is specifically if everyone followed the protocol correctly, just you were unable to pick a common set of parameter. Whereas the other alerts are variations of \"you sent something invalid\".",
+              "createdAt": "2021-03-31T21:55:47Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1Nzc2OTk0",
+          "commit": {
+            "abbreviatedOid": "7fa0355"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-03-31T22:46:37Z",
+          "updatedAt": "2021-03-31T22:46:38Z",
+          "comments": [
+            {
+              "originalPosition": 34,
+              "body": "I'll go with \"illegal_parameter\" :)",
+              "createdAt": "2021-03-31T22:46:38Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2MzkxMTQ3",
+          "commit": {
+            "abbreviatedOid": "1c8519d"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-01T15:29:10Z",
+          "updatedAt": "2021-04-01T15:29:21Z",
+          "comments": [
+            {
+              "originalPosition": 12,
+              "body": "```suggestion\r\n   {{flow-clienthello-malleability}}.) When the client includes a GREASE \"pre_shared_key\" extension, \r\n   it MUST also copy the \"psk_key_exchange_modes\" from the ClientHelloInner into the ClientHelloOuter.\r\n```",
+              "createdAt": "2021-04-01T15:29:11Z",
+              "updatedAt": "2021-04-01T17:12:09Z"
             }
           ]
         }
       ]
+    },
+    {
+      "number": 415,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjA2MzQzMjAy",
+      "title": "Mirror early_data in ClientHelloOuter when applicable.",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/415",
+      "state": "OPEN",
+      "author": "chris-wood",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This should probably land after #414.\r\n\r\nCloses #408.\r\n\r\ncc @davidben",
+      "createdAt": "2021-03-31T20:55:10Z",
+      "updatedAt": "2021-04-01T23:51:25Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "tlswg/draft-ietf-tls-esni",
+      "headRefName": "caw/mirror-early-data",
+      "headRefOid": "b93c90e12da7cbd057137c1ff8195033e6b59ed2",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzIxNTg3",
+          "commit": {
+            "abbreviatedOid": "b93c90e"
+          },
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-03-31T21:10:13Z",
+          "updatedAt": "2021-03-31T21:10:13Z",
+          "comments": []
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI1NzM1Nzc3",
+          "commit": {
+            "abbreviatedOid": "b93c90e"
+          },
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-03-31T21:30:58Z",
+          "updatedAt": "2021-03-31T21:30:58Z",
+          "comments": []
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2NzE2MjAy",
+          "commit": {
+            "abbreviatedOid": "b93c90e"
+          },
+          "author": "ekr",
+          "authorAssociation": "COLLABORATOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "",
+          "createdAt": "2021-04-01T23:49:56Z",
+          "updatedAt": "2021-04-01T23:50:01Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "This also requires pre_shared_key per s 4.2.10, so this contradicts the previous reqt.",
+              "createdAt": "2021-04-01T23:49:57Z",
+              "updatedAt": "2021-04-01T23:50:01Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjI2NzE2NjA1",
+          "commit": {
+            "abbreviatedOid": "b93c90e"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-04-01T23:51:25Z",
+          "updatedAt": "2021-04-01T23:51:25Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "This is based on #414, which clarifies that the PSK must also be present. This won't land until that does.",
+              "createdAt": "2021-04-01T23:51:25Z",
+              "updatedAt": "2021-04-01T23:51:25Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 416,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjA5Mzc4MDkw",
+      "title": "Don't make a new handshake",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/416",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The idea that it might be OK to make a new handshake based on\r\nunauthenticated messages is inherently insecure.",
+      "createdAt": "2021-04-06T01:03:11Z",
+      "updatedAt": "2021-04-06T02:09:06Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "martinthomson/draft-ietf-tls-esni",
+      "headRefName": "noooo-restart",
+      "headRefOid": "24eacecb5f97a46c526dac29b412716f4ee3d0b4",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "martinthomson",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "This won't be needed if you take #417.  I just provided it because it is separable.",
+          "createdAt": "2021-04-06T02:09:06Z",
+          "updatedAt": "2021-04-06T02:09:06Z"
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "number": 417,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjA5Mzg5NjYy",
+      "title": "HRR applies to both",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/417",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "The current document is *so* close to getting this right.  I think that\r\nthis is correct and sufficient.\r\n\r\nCloses #233.\r\nCloses #373 by doing nothing.\r\nIssue #358 can be fixed in TLS 1.3 proper.\r\nIssue #333 can be addressed separately.",
+      "createdAt": "2021-04-06T01:45:32Z",
+      "updatedAt": "2021-04-06T01:45:32Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "martinthomson/draft-ietf-tls-esni",
+      "headRefName": "hrr-both",
+      "headRefOid": "061cd2a70bf1562a6ec473a010563727a5ba0cee",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 418,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjA5MzkyMTQy",
+      "title": "Split-mode HRR is just hard ",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/418",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "...but don't give both servers a cookie.\r\n\r\nThat is, if a client-facing server forwards the ClientHello, it can't do\r\nso statelessly without coordinating with the backend.  This is a\r\nconsequence of moving to a single HelloRetryRequest, but it's a minor\r\none.  In most cases, there will be state established anyway just to get\r\nthe connection forwarded.  DTLS might not work that way, but it's still\r\nlikely reasonable to assume state.\r\n\r\nCloses #333.\r\nBuilds on #417.  Though this might reasonably be taken on its own.",
+      "createdAt": "2021-04-06T01:54:53Z",
+      "updatedAt": "2021-04-06T01:54:53Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "martinthomson/draft-ietf-tls-esni",
+      "headRefName": "split-hrr",
+      "headRefOid": "a6b6b67ca710d023962b8b950a2d26f2806d7aac",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 419,
+      "id": "MDExOlB1bGxSZXF1ZXN0NjA5Mzk1MjQ3",
+      "title": "Grease and HRR leak",
+      "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/419",
+      "state": "OPEN",
+      "author": "martinthomson",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "But that is just how it is.  We get to choose between that leakage and a\r\nknown large amount of bustage.\r\n\r\nCloses #358.",
+      "createdAt": "2021-04-06T02:05:45Z",
+      "updatedAt": "2021-04-06T02:05:45Z",
+      "baseRepository": "tlswg/draft-ietf-tls-esni",
+      "baseRefName": "master",
+      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "headRepository": "martinthomson/draft-ietf-tls-esni",
+      "headRefName": "grease-sticks-out",
+      "headRefOid": "2b3ea14c2c2b3283bec599c10eda1f02588ec491",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
