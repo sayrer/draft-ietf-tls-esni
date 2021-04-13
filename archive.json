@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2021-04-12T20:21:45.535346+00:00",
+  "timestamp": "2021-04-13T13:15:25.068964+00:00",
   "repo": "tlswg/draft-ietf-tls-esni",
   "labels": [
     {
@@ -8881,7 +8881,7 @@
       "id": "MDU6SXNzdWU4MTEzOTk0OTM=",
       "title": "PSK usage sticks out",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/384",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "cjpatton",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [
@@ -8890,8 +8890,8 @@
       "labels": [],
       "body": "As discussed in #354, there are two real-ECH/grease-ECH differentiators related to the PSK extension we may wish to address.\r\n\r\n1. Real ECH disallows the PSK extension in ClientHelloOuter, whereas grease ECH permits PSK in ClientHello.\r\n2. Real ECH allows PSK in ClientHelloInner. In case of acceptance, the backend server may respond with PSK in ServerHello. The response would appear to be unsolicited. something that would not happen in a grease-ECH or vanilla handshake.\r\n\r\nThe question we will ask ourselves here is if/how to mitigate these differentiators. We might simply say that clients MAY (or SHOULD?) send a dummy PSK in the ClientHello(Outer). This ought to provide sufficient cover.",
       "createdAt": "2021-02-18T19:38:54Z",
-      "updatedAt": "2021-03-08T16:24:27Z",
-      "closedAt": null,
+      "updatedAt": "2021-04-12T20:22:30Z",
+      "closedAt": "2021-04-12T20:22:30Z",
       "comments": [
         {
           "author": "davidben",
@@ -9520,15 +9520,15 @@
       "id": "MDU6SXNzdWU4MzE0NTYwNzc=",
       "title": "Not all of CHOuter is authenticated",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/402",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinthomson",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "The position of the ECH extension is not authenticated as part of ClientHelloOuterAAD.  This means that it is possible to construct multiple different ClientHello messages that will all be accepted.\r\n\r\nThis probably isn't that interesting, but it might be worth noting.",
       "createdAt": "2021-03-15T06:10:38Z",
-      "updatedAt": "2021-03-31T16:16:14Z",
-      "closedAt": null,
+      "updatedAt": "2021-04-12T20:23:27Z",
+      "closedAt": "2021-04-12T20:23:27Z",
       "comments": [
         {
           "author": "davidben",
@@ -9593,15 +9593,15 @@
       "id": "MDU6SXNzdWU4MzE0NTg5MDE=",
       "title": "public_name and maximum_name_length could be smaller",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/403",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "martinthomson",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "I think that we're committed now to public_name being a DNS name (there is no way to indicate the type of name (like in RFC 6066).  So I have to assume that the only type of name that is permitted is a DNS name.  And a DNS name can't be longer the 255 bytes.\r\n\r\nTherefore, ECHConfig could be:\r\n\r\n```tls\r\n    struct {\r\n        HpkeKeyConfig key_config;\r\n        uint8 maximum_name_length;\r\n        opaque public_name<1..255>;\r\n        Extension extensions<0..2^16-1>;\r\n    } ECHConfigContents;\r\n```",
       "createdAt": "2021-03-15T06:15:07Z",
-      "updatedAt": "2021-03-30T19:42:15Z",
-      "closedAt": null,
+      "updatedAt": "2021-04-12T20:23:47Z",
+      "closedAt": "2021-04-12T20:23:47Z",
       "comments": [
         {
           "author": "cjpatton",
@@ -38169,24 +38169,26 @@
       "id": "MDExOlB1bGxSZXF1ZXN0NjAzODMwMDQ1",
       "title": "Compress ECHConfigContents.",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/409",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "chris-wood",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Closes #403.\r\n\r\ncc @martinthomson ",
       "createdAt": "2021-03-30T14:00:54Z",
-      "updatedAt": "2021-04-02T00:14:18Z",
+      "updatedAt": "2021-04-12T20:23:47Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "tlswg/draft-ietf-tls-esni",
       "headRefName": "caw/compress-ech-config",
       "headRefOid": "888b9fe8057d11ae36741a6919d59d54058ec396",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2021-04-12T20:23:47Z",
+      "mergedAt": "2021-04-12T20:23:47Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "8aaf750d4e78a9d79e8216ac61da83ef712df916"
+      },
       "comments": [],
       "reviews": [
         {
@@ -38288,24 +38290,26 @@
       "id": "MDExOlB1bGxSZXF1ZXN0NjAzOTA5NjI1",
       "title": "Authenticate ClientECH extension position in ClientHelloOuterAAD.",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/410",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "chris-wood",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Closes #402.",
       "createdAt": "2021-03-30T14:57:10Z",
-      "updatedAt": "2021-04-02T00:13:36Z",
+      "updatedAt": "2021-04-12T20:23:27Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "tlswg/draft-ietf-tls-esni",
       "headRefName": "caw/outer-aad-placeholder",
       "headRefOid": "3859b4adf170f9dcff06d0369f80f9e9b38ec115",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2021-04-12T20:23:27Z",
+      "mergedAt": "2021-04-12T20:23:27Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "45b820869d9d9684cf5ad56e4f861cc672eef0f2"
+      },
       "comments": [
         {
           "author": "martinthomson",
@@ -38604,7 +38608,7 @@
       "labels": [],
       "body": "[Edit: deleted \"Fixes\" line for #405]",
       "createdAt": "2021-03-30T18:57:08Z",
-      "updatedAt": "2021-04-12T19:41:18Z",
+      "updatedAt": "2021-04-12T21:58:00Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
@@ -38769,6 +38773,48 @@
           "body": "I think there are a couple things going on here:\r\n\r\n1. ECHConfig.public_name, as currently written, is described as what goes in CHOuter.server_name. That wasn't right and we should have made it outer reference identity. I believe @chris-wood is going to do a separate PR after this goes through.\r\n\r\n2. SNI or reference identity, we need to define what the type of the thing that goes in ECHConfig.public_name and what validation the client does. In particular, without validation, it gives the network more control over what goes into CHOuter.server_name than would otherwise be the case. Normally, in a typical HTTPS client, TLS can just assume the hostname has passed whatever checks earlier in the stack (URL parsing, DNS lookup, etc.) and so checks in TLS are not load-bearing. The public name breaks this because the TLS layer is fabricating a hostname on its own. So we should have TLS validate it before running too far with it.\r\n\r\nThis PR addresses (2).",
           "createdAt": "2021-04-12T19:41:18Z",
           "updatedAt": "2021-04-12T19:41:18Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Following up on @davidben's comment, I was indeed planning on clarifying that ECHConfig.public_name is a reference identity, and planned on renaming this to something other than `public_name` to match. Basically: `ECHConfig.public_identity` may be either a name or IP address, validated according to the rules in this PR, and clients will use that identity when constructing the ClientHello per the normal rules. (If it's a name, put it in \"server_name,\" else don't put it in that name.)\r\n\r\nI think we can probably land this PR as-is. Is everyone else OK with this plan?",
+          "createdAt": "2021-04-12T20:55:49Z",
+          "updatedAt": "2021-04-12T20:55:49Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 12/04/2021 21:56, Christopher Wood wrote:\n> Following up on @davidben's comment, I was indeed planning on\n> clarifying that ECHConfig.public_name is a reference identity, and\n> planned on renaming this to something other than `public_name` to\n> match. Basically: `ECHConfig.public_identity` \n\nIt's a nit, but I don't think I've ever seen a use of the\nterm \"identity\" that didn't eventually cause confusion. I\nthink public_name was better TBH.\n\n> may be either a name or\n> IP address, \n\nSorry if I missed the discussion but:\n\n- Are one or more IPv4/IPv6 addresses allowed and if so with\n   what syntax?\n- If only 1 is allowed, why? (Syntax still needs a\n   reference.)\n- I don't know how an IP address here ought be handled if it\n   differs from those in the SVCB address hints fields. (Not\n   to mention the origin's A/AAAA records.)\n- Lastly, I forget why we even want an IP address there at\n   all.\n\n\nThanks,\nS.\n\n\n> validated according to the rules in this PR, and clients\n> will use that identity when constructing the ClientHello per the\n> normal rules. (If it's a name, put it in \"server_name,\" else don't\n> put it in that name.)\n> \n> I think we can probably land this PR as-is. Is everyone else OK with\n> this plan?\n> \n",
+          "createdAt": "2021-04-12T21:21:48Z",
+          "updatedAt": "2021-04-12T21:21:48Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I assumed there's at most one identity in this field, be it a name or address, but @dmcardle can clarify. Also, I think the identity here only pertains to how the client-facing server is authenticated. If a server uses an IP-address certificate for the rejection path then it might specify the single IP address of that certificate. (Clients don't use SVCB hints for this, so they're orthogonal.)",
+          "createdAt": "2021-04-12T21:32:40Z",
+          "updatedAt": "2021-04-12T21:32:40Z"
+        },
+        {
+          "author": "sftcd",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "\n\nOn 12/04/2021 22:32, Christopher Wood wrote:\n> I assumed there's at most one identity in this field, be it a name or\n> address, but @dmcardle can clarify. Also, I think the identity here\n> only pertains to how the client-facing server is authenticated. If a\n> server uses an IP-address certificate for the rejection path then it\n> might specify the single IP address of that certificate. \n\nThere can be many SANs even if those are IP addresses. So\nI think you mean that you want exactly one IP address here\nand if one is here that MUST match one SAN iPaddress from\nthe cert?\n\nPersonally I don't think that's useful enough to support\nbut maybe I missed why it was really good.\n\n> (Clients\n> don't use SVCB hints for this, so they're orthogonal.)\n\nTBH, I doubt implementers will notice that orthogonality.\nAnd those deploying even less would be my guess. If one\nis allowed put a single IP address in an ECHConfig and\nothers in SVCB hints then someone needs to say what to do\nwhen those aren't the same.\n\nS.\n\n\n",
+          "createdAt": "2021-04-12T21:41:51Z",
+          "updatedAt": "2021-04-12T21:41:51Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> There can be many SANs even if those are IP addresses\r\n\r\nTrue, but I'm just commenting on parity with what's there right now. (ECHConfig.public_name is just one name.) We may change that later if people want it? I don't see a reason to, though.\r\n\r\n> So I think you mean that you want exactly one IP address here and if one is here that MUST match one SAN iPaddress from the cert?\r\n\r\nYeah, that's what I'm thinking. \r\n\r\n> If one is allowed put a single IP address in an ECHConfig and others in SVCB hints then someone needs to say what to do when those aren't the same.\r\n\r\nHmm, yeah, we may be able to clarify this, but given that we don't discuss anything about the SVCB record (beyond the config) currently, it may not be needed.",
+          "createdAt": "2021-04-12T21:52:00Z",
+          "updatedAt": "2021-04-12T21:52:00Z"
+        },
+        {
+          "author": "dmcardle",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Currently, this PR explicitly states that the client SHOULD ignore the ECHConfig if its `public_name` contains an IP address. Unfortunately, what constitutes a textual representation of an IPv4 address is pretty underspecified, so I didn't manage to come up with a foolproof validation algorithm, otherwise I would make it a MUST.\r\n\r\nIf we want to allow IP addresses, let's figure it out in another PR.",
+          "createdAt": "2021-04-12T21:58:00Z",
+          "updatedAt": "2021-04-12T21:58:00Z"
         }
       ],
       "reviews": [
@@ -38858,24 +38904,26 @@
       "id": "MDExOlB1bGxSZXF1ZXN0NjA0Mjk4OTAx",
       "title": "Allow clients to send a dummy PSK in ClientHelloOuter",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/414",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Closes #384.\r\nThis may also be useful for #408.\r\n\r\n@davidben, do let me know if this PR overloads the term \"GREASE\" in a way that you find to be inaccurate or not in the GREASE spirit :) I'm perfectly happy to call it something else.",
       "createdAt": "2021-03-30T19:24:22Z",
-      "updatedAt": "2021-04-01T17:12:09Z",
+      "updatedAt": "2021-04-12T20:22:30Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "cjpatton/draft-ietf-tls-esni",
       "headRefName": "dummy-psk",
       "headRefOid": "bc98c900de208b4d37bc2b0251062ce74f56c2c9",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2021-04-12T20:22:30Z",
+      "mergedAt": "2021-04-12T20:22:30Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "ea85bf171a5a675c7d752fc17da46d42370c9f2d"
+      },
       "comments": [],
       "reviews": [
         {
@@ -39188,13 +39236,13 @@
       "labels": [],
       "body": "This should probably land after #414.\r\n\r\nCloses #408.\r\n\r\ncc @davidben",
       "createdAt": "2021-03-31T20:55:10Z",
-      "updatedAt": "2021-04-01T23:51:25Z",
+      "updatedAt": "2021-04-13T13:15:04Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
-      "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
+      "baseRefOid": "8aaf750d4e78a9d79e8216ac61da83ef712df916",
       "headRepository": "tlswg/draft-ietf-tls-esni",
       "headRefName": "caw/mirror-early-data",
-      "headRefOid": "b93c90e12da7cbd057137c1ff8195033e6b59ed2",
+      "headRefOid": "c2160ce9855cf89ebf015826b2d7d9185f1e6465",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -39243,7 +39291,7 @@
               "originalPosition": 7,
               "body": "This also requires pre_shared_key per s 4.2.10, so this contradicts the previous reqt.",
               "createdAt": "2021-04-01T23:49:57Z",
-              "updatedAt": "2021-04-01T23:50:01Z"
+              "updatedAt": "2021-04-13T13:15:04Z"
             }
           ]
         },
@@ -39263,7 +39311,7 @@
               "originalPosition": 7,
               "body": "This is based on #414, which clarifies that the PSK must also be present. This won't land until that does.",
               "createdAt": "2021-04-01T23:51:25Z",
-              "updatedAt": "2021-04-01T23:51:25Z"
+              "updatedAt": "2021-04-13T13:15:04Z"
             }
           ]
         }
