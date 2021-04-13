@@ -618,10 +618,10 @@ Table of Contents
        the "server_name" extension.
 
    8.  When the client offers the "pre_shared_key" extension in
-       ClientHelloInner, it MUST also include a GREASE "pre_shared_key"
-       extension in ClientHelloOuter, generated in the manner described
-       in Section 6.1.2.  The client MUST NOT use this extension to
-       advertise a PSK to the client-facing server.  (See
+       ClientHelloInner, it SHOULD also include a GREASE
+       "pre_shared_key" extension in ClientHelloOuter, generated in the
+       manner described in Section 6.1.2.  The client MUST NOT use this
+       extension to advertise a PSK to the client-facing server.  (See
        Section 10.10.3.)  When the client includes a GREASE
        "pre_shared_key" extension, it MUST also copy the
        "psk_key_exchange_modes" from the ClientHelloInner into the
