@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 2 October 2021                                           Fastly
+Expires: 15 October 2021                                          Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                           31 March 2021
+                                                           13 April 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 October 2021.
+   This Internet-Draft will expire on 15 October 2021.
 
 Copyright Notice
 
@@ -66,9 +66,10 @@ Table of Contents
    6.  Client Behavior
      6.1.  Offering ECH
        6.1.1.  ClientHelloInner Indication Extension
-       6.1.2.  Recommended Padding Scheme
-       6.1.3.  Handling the Server Response
-       6.1.4.  Handling HelloRetryRequest
+       6.1.2.  GREASE PSK
+       6.1.3.  Recommended Padding Scheme
+       6.1.4.  Handling the Server Response
+       6.1.5.  Handling HelloRetryRequest
      6.2.  GREASE ECH
    7.  Server Behavior
      7.1.  Client-Facing Server
@@ -304,8 +305,8 @@ Table of Contents
 
        struct {
            HpkeKeyConfig key_config;
-           uint16 maximum_name_length;
-           opaque public_name<1..2^16-1>;
+           uint8 maximum_name_length;
+           opaque public_name<1..255>;
            Extension extensions<0..2^16-1>;
        } ECHConfigContents;
 
@@ -351,7 +352,7 @@ Table of Contents
 
    public_name  The non-empty name of the client-facing server, i.e.,
       the entity trusted to update the ECH configuration.  This is used
-      to correct misconfigured clients, as described in Section 6.1.3.
+      to correct misconfigured clients, as described in Section 6.1.4.
 
    extensions  A list of extensions that the client must take into
       consideration when generating a ClientHello message.  These are
@@ -530,11 +531,12 @@ Table of Contents
    "ClientECH.cipher_suite", "ClientECH.config_id", and "ClientECH.enc"
    fields of the payload of the "encrypted_client_hello" extension.  The
    last parameter, "outer_hello", is computed by serializing
-   ClientHelloOuter with the "encrypted_client_hello" extension removed.
-   Note this does not include the four-byte header included in the
-   Handshake structure.
+   ClientHelloOuter with the "encrypted_client_hello" extension set to
+   the empty string, i.e., the "extension_data" list has zero length.
+   Note this serialization does not include the four-byte header
+   included in the Handshake structure.
 
-   Note the decompression process in Section 5.1 forbids
+   The decompression process in Section 5.1 forbids
    "encrypted_client_hello" in OuterExtensions.  This ensures the
    unauthenticated portion of ClientHelloOuter is not incorporated into
    ClientHelloInner.
@@ -574,7 +576,7 @@ Table of Contents
    2.  It MUST NOT offer to resume any session for TLS 1.2 and below.
 
    3.  It SHOULD contain TLS padding [RFC7685] as described in
-       Section 6.1.2.
+       Section 6.1.3.
 
    4.  If it intends to compress any extensions (see Section 5.1), it
        MUST order those extensions consecutively.
@@ -597,7 +599,7 @@ Table of Contents
    3.  It MUST ensure that all extensions or parameters in
        ClientHelloInner that might change in response to receiving
        HelloRetryRequest match that in ClientHelloOuter.  See
-       Section 6.1.4 for more information.
+       Section 6.1.5 for more information.
 
    4.  It MUST copy the legacy_session_id field from ClientHelloInner.
        This allows the server to echo the correct session ID for TLS
@@ -615,8 +617,15 @@ Table of Contents
    7.  The value of "ECHConfig.contents.public_name" MUST be placed in
        the "server_name" extension.
 
-   8.  It MUST NOT include the "pre_shared_key" extension.  (See
-       Section 10.10.3.)
+   8.  When the client offers the "pre_shared_key" extension in
+       ClientHelloInner, it MUST also include a GREASE "pre_shared_key"
+       extension in ClientHelloOuter, generated in the manner described
+       in Section 6.1.2.  The client MUST NOT use this extension to
+       advertise a PSK to the client-facing server.  (See
+       Section 10.10.3.)  When the client includes a GREASE
+       "pre_shared_key" extension, it MUST also copy the
+       "psk_key_exchange_modes" from the ClientHelloInner into the
+       ClientHelloOuter.
 
    9.  When the client offers the "early_data" extension in
        ClientHelloInner, it MUST also include the "early_data" extension
@@ -695,7 +704,32 @@ Table of Contents
    Backend servers (as described in Section 7) MUST support the
    "ech_is_inner" extension.
 
-6.1.2.  Recommended Padding Scheme
+6.1.2.  GREASE PSK
+
+   When offering ECH, the client is not permitted to advertise PSK
+   identities in the ClientHelloOuter.  However, the client can send a
+   "pre_shared_key" extension in the ClientHelloInner.  In this case,
+   when resuming a session with the client, the backend server sends a
+   "pre_shared_key" extension in its ServerHello.  This would appear to
+   a network observer as if the the server were sending this extension
+   without solicitation, which would violate the extension rules
+   described in [RFC8446].  Sending a GREASE "pre_shared_key" extension
+   in the ClientHelloOuter makes it appear to the network as if the
+   extension were negotiated properly.
+
+   The client generates the extension payload by constructing an
+   "OfferedPsks" structure (see [RFC8446], Section 4.2.11) as follows.
+   For each PSK identity advertised in the ClientHelloInner, the client
+   generates a random PSK identity with the same length.  It also
+   generates a random, 32-bit, unsigned integer to use as the
+   "obfuscated_ticket_age".  Likewise, for each inner PSK binder, the
+   client generates random string of the same length.
+
+   If the server replies with a "pre_shared_key" extension in its
+   SeverHello, then the client MUST abort the handshake with an
+   "illegal_parameter" alert.
+
+6.1.3.  Recommended Padding Scheme
 
    This section describes a deterministic padding mechanism based on the
    following observation: individual extensions can reveal sensitive
@@ -734,7 +768,7 @@ Table of Contents
    EncryptedExtension, so that handshake message also needs to be padded
    using TLS record layer padding.
 
-6.1.3.  Handling the Server Response
+6.1.4.  Handling the Server Response
 
    As described in Section 7, the server MAY either accept ECH and use
    ClientHelloInner or reject it and use ClientHelloOuter.  In handling
@@ -744,17 +778,17 @@ Table of Contents
    "accept_confirmation" as defined in Section 7.2.  Otherwise, it
    presumes rejection.
 
-6.1.3.1.  Accepted ECH
+6.1.4.1.  Accepted ECH
 
    If the server used ClientHelloInner, the client proceeds with the
    connection as usual, authenticating the connection for the true
    server name.
 
-6.1.3.2.  Rejected ECH
+6.1.4.2.  Rejected ECH
 
    If the server used ClientHelloOuter, the client proceeds with the
    handshake, authenticating for ECHConfig.contents.public_name as
-   described in Section 6.1.3.3.  If authentication or the handshake
+   described in Section 6.1.4.3.  If authentication or the handshake
    fails, the client MUST return a failure to the calling application.
    It MUST NOT use the retry configurations.
 
@@ -785,7 +819,7 @@ Table of Contents
    If the server negotiates an earlier version of TLS, or if it does not
    provide an "encrypted_client_hello" extension in EncryptedExtensions,
    the client proceeds with the handshake, authenticating for
-   ECHConfig.contents.public_name as described in Section 6.1.3.3.  If
+   ECHConfig.contents.public_name as described in Section 6.1.4.3.  If
    an earlier version was negotiated, the client MUST NOT enable the
    False Start optimization [RFC7918] for this handshake.  If
    authentication or the handshake fails, the client MUST return a
@@ -803,7 +837,7 @@ Table of Contents
    "encrypted_client_hello" extension.  If the client does not retry in
    either scenario, it MUST report an error to the calling application.
 
-6.1.3.3.  Authenticating for the Public Name
+6.1.4.3.  Authenticating for the Public Name
 
    When the server rejects ECH or otherwise ignores
    "encrypted_client_hello" extension, it continues with the handshake
@@ -824,11 +858,11 @@ Table of Contents
    report such connections as successful to the application.  It
    additionally MUST ignore all session tickets and session IDs
    presented by the server.  These connections are only used to trigger
-   retries, as described in Section 6.1.3.  This may be implemented, for
+   retries, as described in Section 6.1.4.  This may be implemented, for
    instance, by reporting a failed connection with a dedicated error
    code.
 
-6.1.4.  Handling HelloRetryRequest
+6.1.5.  Handling HelloRetryRequest
 
    As required in Section 6.1, clients offering ECH MUST ensure that all
    extensions or parameters that might change in response to receiving a
@@ -917,7 +951,7 @@ Table of Contents
       bytes, where C is the ciphertext expansion of the selected AEAD
       scheme and L is the size of the EncodedClientHelloInner the client
       would compute when offering ECH, padded according to
-      Section 6.1.2.
+      Section 6.1.3.
 
    When sending a second ClientHello in response to a HelloRetryRequest,
    the client copies the entire "encrypted_client_hello" extension from
@@ -1016,10 +1050,16 @@ Table of Contents
    iterating over the candidate ECHConfig values.
 
    Upon determining the ClientHelloInner, the client-facing server then
-   forwards the ClientHelloInner to the appropriate backend server,
-   which proceeds as in Section 7.2.  If the backend server responds
-   with a HelloRetryRequest, the client-facing server forwards it,
-   decrypts the client's second ClientHelloOuter using the procedure in
+   checks that the message includes the "ech_is_inner" extension, omits
+   the "encrypted_client_hello" extension, and does not offer TLS 1.2 or
+   below versions.  If any of these checks fails, the client-facing
+   server MUST abort with an "illegal_parameter" alert.
+
+   If these checks succeed, the client-facing server then forwards the
+   ClientHelloInner to the appropriate backend server, which proceeds as
+   in Section 7.2.  If the backend server responds with a
+   HelloRetryRequest, the client-facing server forwards it, decrypts the
+   client's second ClientHelloOuter using the procedure in
    Section 7.1.1, and forwards the resulting second ClientHelloInner.
    The client-facing server forwards all other TLS messages between the
    client and backend server unmodified.
@@ -1150,7 +1190,7 @@ Table of Contents
    all, it will ignore it as required by [RFC8446]; Section 4.1.2.
    Provided the server can present a certificate valid for the public
    name, the client can safely retry with updated settings, as described
-   in Section 6.1.3.
+   in Section 6.1.4.
 
    Unless ECH is disabled as a result of successfully establishing a
    connection to the public name, the client MUST NOT fall back to using
@@ -1169,7 +1209,7 @@ Table of Contents
 
    Depending on whether the client is configured to accept the proxy's
    certificate as authoritative for the public name, this may trigger
-   the retry logic described in Section 6.1.3 or result in a connection
+   the retry logic described in Section 6.1.4 or result in a connection
    failure.  A proxy which is not authoritative for the public name
    cannot forge a signal to disable ECH.
 
@@ -1485,7 +1525,7 @@ Table of Contents
 10.9.  Padding Policy
 
    Variations in the length of the ClientHelloInner ciphertext could
-   leak information about the corresponding plaintext.  Section 6.1.2
+   leak information about the corresponding plaintext.  Section 6.1.3
    describes a RECOMMENDED padding mechanism for clients aimed at
    reducing potential information leakage.
 
