@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2021-04-13T13:15:25.068964+00:00",
+  "timestamp": "2021-04-14T13:51:04.659477+00:00",
   "repo": "tlswg/draft-ietf-tls-esni",
   "labels": [
     {
@@ -9324,15 +9324,15 @@
       "id": "MDU6SXNzdWU4MjgzOTY3MzU=",
       "title": "Is the outer compression really worthwhile?",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/issues/398",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "sftcd",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "(I'd suggest we resolve this issue after or with #378)\r\nHaving implemented it, I don't think the compression is worthwhile  and would be better omitted from the first RFC version of ECH. My reasons:\r\n- Needless complexity\r\n- it doesn't save enough to be worth it until there are some PQ KEMs (which is not today)\r\n- It adds a huge burden in testing if we want to be confident that no combination is problematic\r\n- There is no sensible way for a client to decide what to compress in general\r\n- The set of compressed or not things may be a new fingerprint \r\n- For OpenSSL, which supports custom extensions, it could be dangerous if there are extension handlers that interact\r\n- There isn't really a sensible api that a library could offer to generic client applications to control this in a useful and simple manner\r\n\r\nSo my suggestion: drop it entirely for now and consider again what to do once we have some PQ KEM that's too big and when we have some real experience with ECH. ",
       "createdAt": "2021-03-10T22:08:35Z",
-      "updatedAt": "2021-03-23T19:49:00Z",
-      "closedAt": null,
+      "updatedAt": "2021-04-13T21:20:38Z",
+      "closedAt": "2021-04-13T21:20:38Z",
       "comments": [
         {
           "author": "sayrer",
@@ -9368,6 +9368,13 @@
           "body": "Indeed, and for the record, I'm happy to keep what we have now absent some other simplifying proposal. It works and is sufficiently general for future use cases. I merely offer an alternative for consideration if we want to remove generality. ",
           "createdAt": "2021-03-23T19:49:00Z",
           "updatedAt": "2021-03-23T19:49:00Z"
+        },
+        {
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Per [the interim](https://codimd.ietf.org/notes-ietf-interim-2021-tls-01-tls), closing this for now. If someone comes up with something simpler, please share it!",
+          "createdAt": "2021-04-13T21:20:38Z",
+          "updatedAt": "2021-04-13T21:20:38Z"
         }
       ]
     },
@@ -9379,11 +9386,13 @@
       "state": "OPEN",
       "author": "sftcd",
       "authorAssociation": "CONTRIBUTOR",
-      "assignees": [],
+      "assignees": [
+        "chris-wood"
+      ],
       "labels": [],
       "body": "Encoding the \"ECH worked\" signal in the SH.random lower octets is, at best, ugly. It also arguably causes violation of internal API designs  in at least the OpenSSL code. And I'm not sure if there might be some interaction between that and ticket handling (just from the look of some code I've yet to understand really.)\r\n\r\nDo we really need such a hacky solution?  Given the ECH sticks out in the CH, we could just define a non-encrypted extension in the SH to include the confirmation value maybe (though even that is pretty hacky).\r\n ",
       "createdAt": "2021-03-10T22:28:14Z",
-      "updatedAt": "2021-04-01T23:07:54Z",
+      "updatedAt": "2021-04-13T21:14:50Z",
       "closedAt": null,
       "comments": [
         {
@@ -36784,24 +36793,26 @@
       "id": "MDExOlB1bGxSZXF1ZXN0NTczODAyNzQ2",
       "title": "Clarify \"don't stick out\" considerations",
       "url": "https://github.com/tlswg/draft-ietf-tls-esni/pull/382",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "cjpatton",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "This PR aims to resolve the discussion in issue #354 by:\r\n\r\n1. clarifying goals/non-goals for \"don't stick out\"; and\r\n2. creating a TODO for a future experiment that assesses the deployability of the GREASE extension.\r\n\r\nDealing with PSK sticking out has been assigned to #384.",
       "createdAt": "2021-02-15T21:35:45Z",
-      "updatedAt": "2021-04-02T00:05:26Z",
+      "updatedAt": "2021-04-13T21:16:07Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
       "headRepository": "cjpatton/draft-ietf-tls-esni",
       "headRefName": "dont-stick-out",
       "headRefOid": "630d8fffa82d3ac89a44708984b6af2473acc533",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2021-04-13T21:16:07Z",
+      "mergedAt": "2021-04-13T21:16:07Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "d309b977ed5c91a5e7ae3aab969d11020bc3b97a"
+      },
       "comments": [
         {
           "author": "cjpatton",
@@ -39236,13 +39247,13 @@
       "labels": [],
       "body": "This should probably land after #414.\r\n\r\nCloses #408.\r\n\r\ncc @davidben",
       "createdAt": "2021-03-31T20:55:10Z",
-      "updatedAt": "2021-04-13T13:15:04Z",
+      "updatedAt": "2021-04-13T19:31:19Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "8aaf750d4e78a9d79e8216ac61da83ef712df916",
       "headRepository": "tlswg/draft-ietf-tls-esni",
       "headRefName": "caw/mirror-early-data",
-      "headRefOid": "c2160ce9855cf89ebf015826b2d7d9185f1e6465",
+      "headRefOid": "15259b6e19bca3a7f4661dce57a94a52c2e3fa17",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -39291,7 +39302,7 @@
               "originalPosition": 7,
               "body": "This also requires pre_shared_key per s 4.2.10, so this contradicts the previous reqt.",
               "createdAt": "2021-04-01T23:49:57Z",
-              "updatedAt": "2021-04-13T13:15:04Z"
+              "updatedAt": "2021-04-13T13:16:53Z"
             }
           ]
         },
@@ -39311,9 +39322,62 @@
               "originalPosition": 7,
               "body": "This is based on #414, which clarifies that the PSK must also be present. This won't land until that does.",
               "createdAt": "2021-04-01T23:51:25Z",
-              "updatedAt": "2021-04-13T13:15:04Z"
+              "updatedAt": "2021-04-13T13:16:53Z"
             }
           ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjM0NTc1NDE4",
+          "commit": {
+            "abbreviatedOid": "c2160ce"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-04-13T13:16:48Z",
+          "updatedAt": "2021-04-13T13:16:48Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "```suggestion\r\n   SHOULD also include a GREASE \"pre_shared_key\" extension in ClientHelloOuter,\r\n```",
+              "createdAt": "2021-04-13T13:16:48Z",
+              "updatedAt": "2021-04-13T13:16:53Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjM0NTc3MDg5",
+          "commit": {
+            "abbreviatedOid": "15259b6"
+          },
+          "author": "chris-wood",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-04-13T13:18:20Z",
+          "updatedAt": "2021-04-13T13:18:21Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "@ekr this should now be resolved give that #414 landed. Can you please take another look?",
+              "createdAt": "2021-04-13T13:18:20Z",
+              "updatedAt": "2021-04-13T13:18:21Z"
+            }
+          ]
+        },
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjM0OTUzOTY3",
+          "commit": {
+            "abbreviatedOid": "15259b6"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-13T19:31:19Z",
+          "updatedAt": "2021-04-13T19:31:19Z",
+          "comments": []
         }
       ]
     },
@@ -39363,7 +39427,7 @@
       "labels": [],
       "body": "The current document is *so* close to getting this right.  I think that\r\nthis is correct and sufficient.\r\n\r\nCloses #233.\r\nCloses #373 by doing nothing.\r\nIssue #358 can be fixed in TLS 1.3 proper.\r\nIssue #333 can be addressed separately.",
       "createdAt": "2021-04-06T01:45:32Z",
-      "updatedAt": "2021-04-06T01:45:32Z",
+      "updatedAt": "2021-04-13T22:43:39Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
@@ -39374,8 +39438,37 @@
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
-      "reviews": []
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "On the whole I think this is an improvement over the current language. However, it doesn't seem to solve what I think of as our fundamental problem: any future extension to TLS 1.3 that is HRR-sensitive most not only consider how it changes the core protocol, but also how it interacts with ECH. Insofar as possible, we should design ECH in a way that mitigates friction when composing it with other protocol changes. Otherwise, I worry this could become the source of future bugs or vulnerabilities in TLS stacks.\r\n\r\nThat said, it may be the prevailing view that these sorts of composition issues are inherent to protocol design, and hence not worth spending too much time/energy trying to mitigate. I'd like to think these issues aren't inevitable. Admittedly, however, I lack the chops of others following this issue and may be incredibly naive :)",
+          "createdAt": "2021-04-13T19:30:02Z",
+          "updatedAt": "2021-04-13T19:30:02Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjM1MDgyMzM4",
+          "commit": {
+            "abbreviatedOid": "061cd2a"
+          },
+          "author": "davidben",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2021-04-13T22:43:39Z",
+          "updatedAt": "2021-04-13T22:43:39Z",
+          "comments": [
+            {
+              "originalPosition": 46,
+              "body": "This criteria still doesn't look right. It seems to make the same mistake as text elsewhere in the document. ClientHello.cipher_suites cannot change in response to HelloRetryRequest, so it does not match the stated criteria. But in order for HRR to successfully apply to both, it must match. The PR also says 'which groups are\r\nincluded in the \"key_share\" extension', which is not supported by the proposed sentence. The proposed sentence would capture the entire key_share extension.\r\n\r\nFor me, I think the big question on matching vs. making a mismatch work (I now think we can do something much simpler than the HRRInner/HRROuter design, especially since we're discarding #333) is getting this criteria down. Whether we can write down clear and complete criteria that captures current and future[*] extensions and convince ourselves it'll work going forward. I don't think this PR is yet a successful existence proof.\r\n\r\n[*] We don't have many of these, but RFC8492 is at least one data point.",
+              "createdAt": "2021-04-13T22:43:39Z",
+              "updatedAt": "2021-04-13T22:43:39Z"
+            }
+          ]
+        }
+      ]
     },
     {
       "number": 418,
@@ -39415,7 +39508,7 @@
       "labels": [],
       "body": "But that is just how it is.  We get to choose between that leakage and a\r\nknown large amount of bustage.\r\n\r\nCloses #358.",
       "createdAt": "2021-04-06T02:05:45Z",
-      "updatedAt": "2021-04-06T02:05:45Z",
+      "updatedAt": "2021-04-13T19:54:50Z",
       "baseRepository": "tlswg/draft-ietf-tls-esni",
       "baseRefName": "master",
       "baseRefOid": "95a3fb44cc7703ab33ef11a9781f51962f3d0e0b",
@@ -39426,8 +39519,44 @@
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
-      "reviews": []
+      "comments": [
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "This solution admits a straightforward, active distinguisher: just intercept CH1, respond with a fake HRR, and look at CH2. It's true that we \"give up\" on making HRR not stick out in #407. However, one of the design goals there is to prevent active attacks that trigger the HRR code path when it otherwise would not have happened. What we give up on is ensuring \"don't stick out\" when HRR is inevitable for the given client and server.",
+          "createdAt": "2021-04-13T19:00:35Z",
+          "updatedAt": "2021-04-13T19:02:06Z"
+        },
+        {
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> This solution admits a straightforward, active distinguisher: just intercept CH1, respond with a fake HRR, and look at CH2. It's true that we \"give up\" on making HRR not stick out in #407. However, one of the design goals there is to prevent active attacks that trigger the HRR code path when it otherwise would not have happened. What we give up on is ensuring \"don't stick out\" when HRR is inevitable for the given client and server.\r\n\r\nAh, are you saying that this conflicts with #407 (and thus would have to be removed if #407 is merged)?",
+          "createdAt": "2021-04-13T19:15:55Z",
+          "updatedAt": "2021-04-13T19:15:55Z"
+        },
+        {
+          "author": "cjpatton",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I believe #407 resolves the same \"OPEN ISSUE\", yes.",
+          "createdAt": "2021-04-13T19:54:50Z",
+          "updatedAt": "2021-04-13T19:54:50Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NjM0OTI3ODE1",
+          "commit": {
+            "abbreviatedOid": "2b3ea14"
+          },
+          "author": "cbartle891",
+          "authorAssociation": "COLLABORATOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2021-04-13T18:57:36Z",
+          "updatedAt": "2021-04-13T18:57:36Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
