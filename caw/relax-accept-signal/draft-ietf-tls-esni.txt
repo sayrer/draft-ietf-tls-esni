@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 16 October 2021                                          Fastly
+Expires: 21 October 2021                                          Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                           14 April 2021
+                                                           19 April 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 16 October 2021.
+   This Internet-Draft will expire on 21 October 2021.
 
 Copyright Notice
 
@@ -1139,9 +1139,12 @@ Table of Contents
    where HKDF-Expand-Label and Transcript-Hash are as defined in
    [RFC8446], Section 7.1, "0" indicates a string of Hash.length bytes
    set to zero, and ClientHelloInner...ServerHelloECHConf refers to the
-   sequence of handshake messages beginning with the first ClientHello
-   and ending with ServerHelloECHConf.  Finally, the backend server
-   constructs its ServerHello message so that it is equal to
+   sequence of handshake messages beginning with the first
+   ClientHelloInner and ending with ServerHelloECHConf.  (Note that
+   ClientHelloInner and ServerHelloECHConf messages replace the
+   ClientHello and ServerHello messages in the transcript hash sequence
+   as specified in Section 4.1.1 of [RFC8446].  Finally, the backend
+   server constructs its ServerHello message so that it is equal to
    ServerHelloECHConf but with the last 8 bytes of ServerHello.random
    set to "accept_confirmation".
 
