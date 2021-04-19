@@ -352,7 +352,7 @@ Table of Contents
       lifetime of a particular ECH configuration.
 
    public_identity  The identity of the client-facing server, i.e., the
-      entity trusted to updat the ECH configuration.  This is used to
+      entity trusted to update the ECH configuration.  This is used to
       construct the ClientHelloOuter, as described in Section 6.1.4.
       This MUST be a valid DNS name or IP address as described in
       Section 4.1.  Clients MUST ignore any "ECHConfig" structure whose
