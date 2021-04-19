@@ -13,11 +13,11 @@
        This document describes a mechanism in Transport Layer Security (TLS) for
 encrypting a ClientHello message under a server public key. 
     " name="description">
-<meta content="xml2rfc 3.6.0" name="generator">
+<meta content="xml2rfc 3.7.0" name="generator">
 <meta content="Internet-Draft" name="keyword">
 <meta content="draft-ietf-tls-esni-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.6.0
+  xml2rfc 3.7.0
     Python 3.8.8
     appdirs 1.4.4
     ConfigArgParse 1.2.3
@@ -845,7 +845,7 @@ address div.right {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Rescorla, et al.</td>
-<td class="center">Expires 15 October 2021</td>
+<td class="center">Expires 21 October 2021</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -858,12 +858,12 @@ address div.right {
 <dd class="internet-draft">draft-ietf-tls-esni-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2021-04-13" class="published">13 April 2021</time>
+<time datetime="2021-04-19" class="published">19 April 2021</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2021-10-15">15 October 2021</time></dd>
+<dd class="expires"><time datetime="2021-10-21">21 October 2021</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -910,7 +910,7 @@ encrypting a ClientHello message under a server public key.<a href="#section-abs
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 15 October 2021.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 21 October 2021.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -938,231 +938,231 @@ encrypting a ClientHello message under a server public key.<a href="#section-abs
         <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
 <a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
         </h2>
-<nav class="toc"><ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.1">
+<nav class="toc"><ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.1">
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="xref">1</a>.  <a href="#name-introduction" class="xref">Introduction</a></p>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.2">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.2">
             <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="xref">2</a>.  <a href="#name-conventions-and-definitions" class="xref">Conventions and Definitions</a></p>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.3">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.3">
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="xref">3</a>.  <a href="#name-overview" class="xref">Overview</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.3.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.3.2.1">
                 <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="xref">3.1</a>.  <a href="#name-topologies" class="xref">Topologies</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.3.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.3.2.2">
                 <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="xref">3.2</a>.  <a href="#name-encrypted-clienthello-ech" class="xref">Encrypted ClientHello (ECH)</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.4">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.4">
             <p id="section-toc.1-1.4.1"><a href="#section-4" class="xref">4</a>.  <a href="#name-encrypted-clienthello-confi" class="xref">Encrypted ClientHello Configuration</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.4.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.4.2.1">
                 <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="xref">4.1</a>.  <a href="#name-configuration-extensions" class="xref">Configuration Extensions</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.5">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.5">
             <p id="section-toc.1-1.5.1"><a href="#section-5" class="xref">5</a>.  <a href="#name-the-encrypted_client_hello-" class="xref">The "encrypted_client_hello" Extension</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.5.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.5.2.1">
                 <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="xref">5.1</a>.  <a href="#name-encoding-the-clienthelloinn" class="xref">Encoding the ClientHelloInner</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.5.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.5.2.2">
                 <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="xref">5.2</a>.  <a href="#name-authenticating-the-clienthe" class="xref">Authenticating the ClientHelloOuter</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.6">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.6">
             <p id="section-toc.1-1.6.1"><a href="#section-6" class="xref">6</a>.  <a href="#name-client-behavior" class="xref">Client Behavior</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.6.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.6.2.1">
                 <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="xref">6.1</a>.  <a href="#name-offering-ech" class="xref">Offering ECH</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.6.2.1.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.6.2.1.2.1">
                     <p id="section-toc.1-1.6.2.1.2.1.1"><a href="#section-6.1.1" class="xref">6.1.1</a>.  <a href="#name-clienthelloinner-indication" class="xref">ClientHelloInner Indication Extension</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.6.2.1.2.2">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.6.2.1.2.2">
                     <p id="section-toc.1-1.6.2.1.2.2.1"><a href="#section-6.1.2" class="xref">6.1.2</a>.  <a href="#name-grease-psk" class="xref">GREASE PSK</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.6.2.1.2.3">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.6.2.1.2.3">
                     <p id="section-toc.1-1.6.2.1.2.3.1"><a href="#section-6.1.3" class="xref">6.1.3</a>.  <a href="#name-recommended-padding-scheme" class="xref">Recommended Padding Scheme</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.6.2.1.2.4">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.6.2.1.2.4">
                     <p id="section-toc.1-1.6.2.1.2.4.1"><a href="#section-6.1.4" class="xref">6.1.4</a>.  <a href="#name-handling-the-server-respons" class="xref">Handling the Server Response</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.6.2.1.2.5">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.6.2.1.2.5">
                     <p id="section-toc.1-1.6.2.1.2.5.1"><a href="#section-6.1.5" class="xref">6.1.5</a>.  <a href="#name-handling-helloretryrequest" class="xref">Handling HelloRetryRequest</a></p>
 </li>
                 </ul>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.6.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.6.2.2">
                 <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="xref">6.2</a>.  <a href="#name-grease-ech" class="xref">GREASE ECH</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.7">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.7">
             <p id="section-toc.1-1.7.1"><a href="#section-7" class="xref">7</a>.  <a href="#name-server-behavior" class="xref">Server Behavior</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.7.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.7.2.1">
                 <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="xref">7.1</a>.  <a href="#name-client-facing-server" class="xref">Client-Facing Server</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.7.2.1.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.7.2.1.2.1">
                     <p id="section-toc.1-1.7.2.1.2.1.1"><a href="#section-7.1.1" class="xref">7.1.1</a>.  <a href="#name-handling-helloretryrequest-2" class="xref">Handling HelloRetryRequest</a></p>
 </li>
                 </ul>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.7.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.7.2.2">
                 <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="xref">7.2</a>.  <a href="#name-backend-server" class="xref">Backend Server</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.8">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.8">
             <p id="section-toc.1-1.8.1"><a href="#section-8" class="xref">8</a>.  <a href="#name-compatibility-issues" class="xref">Compatibility Issues</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.8.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.8.2.1">
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="xref">8.1</a>.  <a href="#name-misconfiguration-and-deploy" class="xref">Misconfiguration and Deployment Concerns</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.8.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.8.2.2">
                 <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="xref">8.2</a>.  <a href="#name-middleboxes" class="xref">Middleboxes</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.9">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.9">
             <p id="section-toc.1-1.9.1"><a href="#section-9" class="xref">9</a>.  <a href="#name-compliance-requirements" class="xref">Compliance Requirements</a></p>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.10">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.10">
             <p id="section-toc.1-1.10.1"><a href="#section-10" class="xref">10</a>. <a href="#name-security-considerations" class="xref">Security Considerations</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.10.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.10.2.1">
                 <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="xref">10.1</a>.  <a href="#name-security-and-privacy-goals" class="xref">Security and Privacy Goals</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.2">
                 <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="xref">10.2</a>.  <a href="#name-unauthenticated-and-plainte" class="xref">Unauthenticated and Plaintext DNS</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.3">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.3">
                 <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="xref">10.3</a>.  <a href="#name-client-tracking" class="xref">Client Tracking</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.4">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.4">
                 <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="xref">10.4</a>.  <a href="#name-optional-configuration-iden" class="xref">Optional Configuration Identifiers and Trial Decryption</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.5">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.5">
                 <p id="section-toc.1-1.10.2.5.1"><a href="#section-10.5" class="xref">10.5</a>.  <a href="#name-outer-clienthello" class="xref">Outer ClientHello</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.6">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.6">
                 <p id="section-toc.1-1.10.2.6.1"><a href="#section-10.6" class="xref">10.6</a>.  <a href="#name-related-privacy-leaks" class="xref">Related Privacy Leaks</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.7">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.7">
                 <p id="section-toc.1-1.10.2.7.1"><a href="#section-10.7" class="xref">10.7</a>.  <a href="#name-attacks-exploiting-acceptan" class="xref">Attacks Exploiting Acceptance Confirmation</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8">
                 <p id="section-toc.1-1.10.2.8.1"><a href="#section-10.8" class="xref">10.8</a>.  <a href="#name-comparison-against-criteria" class="xref">Comparison Against Criteria</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.1">
                     <p id="section-toc.1-1.10.2.8.2.1.1"><a href="#section-10.8.1" class="xref">10.8.1</a>.  <a href="#name-mitigate-cut-and-paste-atta" class="xref">Mitigate Cut-and-Paste Attacks</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.2">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.2">
                     <p id="section-toc.1-1.10.2.8.2.2.1"><a href="#section-10.8.2" class="xref">10.8.2</a>.  <a href="#name-avoid-widely-shared-secrets" class="xref">Avoid Widely Shared Secrets</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.3">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.3">
                     <p id="section-toc.1-1.10.2.8.2.3.1"><a href="#section-10.8.3" class="xref">10.8.3</a>.  <a href="#name-prevent-sni-based-denial-of" class="xref">Prevent SNI-Based Denial-of-Service Attacks</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.4">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.4">
                     <p id="section-toc.1-1.10.2.8.2.4.1"><a href="#section-10.8.4" class="xref">10.8.4</a>.  <a href="#name-do-not-stick-out" class="xref">Do Not Stick Out</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.5">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.5">
                     <p id="section-toc.1-1.10.2.8.2.5.1"><a href="#section-10.8.5" class="xref">10.8.5</a>.  <a href="#name-maintain-forward-secrecy" class="xref">Maintain Forward Secrecy</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.6">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.6">
                     <p id="section-toc.1-1.10.2.8.2.6.1"><a href="#section-10.8.6" class="xref">10.8.6</a>.  <a href="#name-enable-multi-party-security" class="xref">Enable Multi-party Security Contexts</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.8.2.7">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.8.2.7">
                     <p id="section-toc.1-1.10.2.8.2.7.1"><a href="#section-10.8.7" class="xref">10.8.7</a>.  <a href="#name-support-multiple-protocols" class="xref">Support Multiple Protocols</a></p>
 </li>
                 </ul>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.9">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.9">
                 <p id="section-toc.1-1.10.2.9.1"><a href="#section-10.9" class="xref">10.9</a>.  <a href="#name-padding-policy" class="xref">Padding Policy</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.10">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.10">
                 <p id="section-toc.1-1.10.2.10.1"><a href="#section-10.10" class="xref">10.10</a>. <a href="#name-active-attack-mitigations" class="xref">Active Attack Mitigations</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.10.2.10.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.10.2.10.2.1">
                     <p id="section-toc.1-1.10.2.10.2.1.1"><a href="#section-10.10.1" class="xref">10.10.1</a>.  <a href="#name-client-reaction-attack-miti" class="xref">Client Reaction Attack Mitigation</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.10.2.2">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.10.2.2">
                     <p id="section-toc.1-1.10.2.10.2.2.1"><a href="#section-10.10.2" class="xref">10.10.2</a>.  <a href="#name-helloretryrequest-hijack-mi" class="xref">HelloRetryRequest Hijack Mitigation</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.10.2.10.2.3">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.10.2.10.2.3">
                     <p id="section-toc.1-1.10.2.10.2.3.1"><a href="#section-10.10.3" class="xref">10.10.3</a>.  <a href="#name-clienthello-malleability-mi" class="xref">ClientHello Malleability Mitigation</a></p>
 </li>
                 </ul>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.11">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.11">
             <p id="section-toc.1-1.11.1"><a href="#section-11" class="xref">11</a>. <a href="#name-iana-considerations" class="xref">IANA Considerations</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.11.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.11.2.1">
                 <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="xref">11.1</a>.  <a href="#name-update-of-the-tls-extension" class="xref">Update of the TLS ExtensionType Registry</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.11.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.11.2.2">
                 <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="xref">11.2</a>.  <a href="#name-update-of-the-tls-alert-reg" class="xref">Update of the TLS Alert Registry</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.12">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.12">
             <p id="section-toc.1-1.12.1"><a href="#section-12" class="xref">12</a>. <a href="#name-echconfig-extension-guidanc" class="xref">ECHConfig Extension Guidance</a></p>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.13">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.13">
             <p id="section-toc.1-1.13.1"><a href="#section-13" class="xref">13</a>. <a href="#name-references" class="xref">References</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.13.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.13.2.1">
                 <p id="section-toc.1-1.13.2.1.1"><a href="#section-13.1" class="xref">13.1</a>.  <a href="#name-normative-references" class="xref">Normative References</a></p>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.13.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.13.2.2">
                 <p id="section-toc.1-1.13.2.2.1"><a href="#section-13.2" class="xref">13.2</a>.  <a href="#name-informative-references" class="xref">Informative References</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.14">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.14">
             <p id="section-toc.1-1.14.1"><a href="#section-appendix.a" class="xref">Appendix A</a>.  <a href="#name-alternative-sni-protection-" class="xref">Alternative SNI Protection Designs</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.14.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.14.2.1">
                 <p id="section-toc.1-1.14.2.1.1"><a href="#section-a.1" class="xref">A.1</a>.  <a href="#name-tls-layer" class="xref">TLS-layer</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.14.2.1.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.14.2.1.2.1">
                     <p id="section-toc.1-1.14.2.1.2.1.1"><a href="#section-a.1.1" class="xref">A.1.1</a>.  <a href="#name-tls-in-early-data" class="xref">TLS in Early Data</a></p>
 </li>
-                  <li class="ulEmpty compact toc" id="section-toc.1-1.14.2.1.2.2">
+                  <li class="ulEmpty toc compact" id="section-toc.1-1.14.2.1.2.2">
                     <p id="section-toc.1-1.14.2.1.2.2.1"><a href="#section-a.1.2" class="xref">A.1.2</a>.  <a href="#name-combined-tickets" class="xref">Combined Tickets</a></p>
 </li>
                 </ul>
 </li>
-              <li class="ulEmpty compact toc" id="section-toc.1-1.14.2.2">
+              <li class="ulEmpty toc compact" id="section-toc.1-1.14.2.2">
                 <p id="section-toc.1-1.14.2.2.1"><a href="#section-a.2" class="xref">A.2</a>.  <a href="#name-application-layer" class="xref">Application-layer</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.14.2.2.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.14.2.2.2.1">
                     <p id="section-toc.1-1.14.2.2.2.1.1"><a href="#section-a.2.1" class="xref">A.2.1</a>.  <a href="#name-http-2-certificate-frames" class="xref">HTTP/2 CERTIFICATE Frames</a></p>
 </li>
                 </ul>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.15">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.15">
             <p id="section-toc.1-1.15.1"><a href="#section-appendix.b" class="xref">Appendix B</a>.  <a href="#name-acknowledgements" class="xref">Acknowledgements</a></p>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.16">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.16">
             <p id="section-toc.1-1.16.1"><a href="#section-appendix.c" class="xref">Appendix C</a>.  <a href="#name-change-log" class="xref">Change Log</a></p>
-<ul class="ulEmpty compact toc">
-<li class="ulEmpty compact toc" id="section-toc.1-1.16.2.1">
+<ul class="ulEmpty toc compact">
+<li class="ulEmpty toc compact" id="section-toc.1-1.16.2.1">
                 <p id="section-toc.1-1.16.2.1.1"><a href="#section-c.1" class="xref">C.1</a>.  <a href="#name-since-draft-ietf-tls-esni-0" class="xref">Since draft-ietf-tls-esni-09</a></p>
 </li>
             </ul>
 </li>
-          <li class="ulEmpty compact toc" id="section-toc.1-1.17">
+          <li class="ulEmpty toc compact" id="section-toc.1-1.17">
             <p id="section-toc.1-1.17.1"><a href="#section-appendix.d" class="xref"></a><a href="#name-authors-addresses" class="xref">Authors' Addresses</a></p>
 </li>
         </ul>
@@ -2114,7 +2114,7 @@ if it is invalid. It otherwise ignores the extension and MUST NOT use the retry
 keys.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
 <p id="section-6.2-6">[[OPEN ISSUE: if the client sends a GREASE "encrypted_client_hello" extension,
 should it also send a GREASE "pre_shared_key" extension? If not, GREASE+ticket
-is a trivial distinguisher.]]<a href="#section-6.2-6" class="pilcrow">¶</a></p>
+is a trivial distinguisher. See issue #384.]]<a href="#section-6.2-6" class="pilcrow">¶</a></p>
 <p id="section-6.2-7">Offering a GREASE extension is not considered offering an encrypted ClientHello
 for purposes of requirements in <a href="#client-behavior" class="xref">Section 6</a>. In particular, the client
 MAY offer to resume sessions established without ECH.<a href="#section-6.2-7" class="pilcrow">¶</a></p>
@@ -2278,21 +2278,25 @@ client by computing its ServerHello as described here.<a href="#section-7.2-1" c
 <p id="section-7.2-2">The backend server begins by generating a message ServerHelloECHConf, which is
 identical in content to a ServerHello message with the exception that
 ServerHelloECHConf.random is equal to 24 random bytes followed by 8 zero bytes.
-It then computes a string<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+It then computes an 8-byte string<a href="#section-7.2-2" class="pilcrow">¶</a></p>
 <div class="artwork art-text alignLeft" id="section-7.2-3">
 <pre>
-    accept_confirmation =
-        Derive-Secret(Handshake Secret,
-                      "ech accept confirmation",
-                      ClientHelloInner...ServerHelloECHConf)
+   accept_confirmation = HKDF-Expand-Label(0,
+      "ech accept confirmation",
+      Transcript-Hash(ClientHelloInner...ServerHelloECHConf),
+      8)
 </pre><a href="#section-7.2-3" class="pilcrow">¶</a>
 </div>
-<p id="section-7.2-4">where Derive-Secret and Handshake Secret are as specified in <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>,
-Section 7.1, and ClientHelloInner...ServerHelloECHConf refers to the sequence of
-handshake messages beginning with the first ClientHello and ending with
-ServerHelloECHConf. Finally, the backend server constructs its ServerHello
-message so that it is equal to ServerHelloECHConf but with the last 8 bytes of
-ServerHello.random set to the first 8 bytes of accept_confirmation.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
+<p id="section-7.2-4">where HKDF-Expand-Label and Transcript-Hash are as defined in <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>,
+Section 7.1, "0" indicates a string of Hash.length bytes set to zero, and
+ClientHelloInner...ServerHelloECHConf refers to the sequence of handshake
+messages beginning with the first ClientHelloInner and ending with
+ServerHelloECHConf. (Note that ClientHelloInner and ServerHelloECHConf
+messages replace the ClientHello and ServerHello messages in the transcript
+hash sequence as specified in Section 4.1.1 of <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>. Finally, the
+backend server constructs its ServerHello message so that it is equal to
+ServerHelloECHConf but with the last 8 bytes of ServerHello.random set to
+<code>accept_confirmation</code>.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
 <p id="section-7.2-5">The backend server MUST NOT perform this operation if it negotiated TLS 1.2 or
 below. Note that doing so would overwrite the downgrade signal for TLS 1.3 (see
 <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>, Section 4.1.3).<a href="#section-7.2-5" class="pilcrow">¶</a></p>
@@ -2391,13 +2395,13 @@ a compliant ECH application MUST implement the following HPKE cipher suite:<a hr
 <a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-security-and-privacy-goals" class="section-name selfRef">Security and Privacy Goals</a>
         </h3>
 <p id="section-10.1-1">ECH considers two types of attackers: passive and active. Passive attackers can
-read packets from the network. They cannot perform any sort of active behavior
-such as probing servers or querying DNS. A middlebox that filters based on
-plaintext packet contents is one example of a passive attacker. In contrast,
-active attackers can write packets into the network for malicious purposes, such
-as interfering with existing connections, probing servers, and querying DNS. In
-short, an active attacker corresponds to the conventional threat model for
-TLS 1.3 <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+read packets from the network, but they cannot perform any sort of active
+behavior such as probing servers or querying DNS. A middlebox that filters based
+on plaintext packet contents is one example of a passive attacker. In contrast,
+active attackers can also write packets into the network for malicious purposes,
+such as interfering with existing connections, probing servers, and querying
+DNS. In short, an active attacker corresponds to the conventional threat model
+for TLS 1.3 <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
 <p id="section-10.1-2">Given these types of attackers, the primary goals of ECH are as follows.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-10.1-3">
 <li id="section-10.1-3.1">Use of ECH does not weaken the security properties of TLS without ECH.<a href="#section-10.1-3.1" class="pilcrow">¶</a>
@@ -2420,27 +2424,11 @@ a client-facing server services many backend origin hosts, only one of which
 supports some cipher suite, it may be possible to identify that host based on
 the contents of unencrypted handshake messages.<a href="#section-10.1-4" class="pilcrow">¶</a></p>
 <p id="section-10.1-5">Beyond these primary security and privacy goals, ECH also aims to hide, to some
-extent, (a) whether or not a specific server supports ECH and (b) whether or
-not ECH was accepted for a particular connection. ECH aims to achieve both
-properties, assuming the attacker is passive and does not know the set of ECH
-configurations offered by the client-facing server. It does not achieve these
-properties for active attackers. More specifically:<a href="#section-10.1-5" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-10.1-6.1">Passive attackers with a known ECH configuration can distinguish between a
-connection that negotiates ECH with that configuration and one which does not,
-because the latter used a GREASE "encrypted_client_hello" extension (as
-specified in <a href="#grease-ech" class="xref">Section 6.2</a>) or a different ECH configuration.<a href="#section-10.1-6.1" class="pilcrow">¶</a>
-</li>
-          <li class="normal" id="section-10.1-6.2">Passive attackers without the ECH configuration cannot distinguish between a
-connection that negotiates ECH and one which uses a GREASE
-"encrypted_client_hello" extension.<a href="#section-10.1-6.2" class="pilcrow">¶</a>
-</li>
-          <li class="normal" id="section-10.1-6.3">Active attackers can distinguish between a connection that negotiates ECH and
-one which uses a GREASE "encrypted_client_hello" extension.<a href="#section-10.1-6.3" class="pilcrow">¶</a>
-</li>
-        </ul>
-<p id="section-10.1-7">See <a href="#dont-stick-out" class="xref">Section 10.8.4</a> for more discussion about the "do not stick out"
-criteria from <span>[<a href="#RFC8744" class="xref">RFC8744</a>]</span>.<a href="#section-10.1-7" class="pilcrow">¶</a></p>
+extent, the fact that it is being used at all. Specifically, the GREASE ECH
+extension described in <a href="#grease-ech" class="xref">Section 6.2</a> does not change the security properties of
+the TLS handshake at all. Its goal is to provide "cover" for the real ECH
+protocol (<a href="#real-ech" class="xref">Section 6.1</a>), as a means of addressing the "do not stick out"
+requirements of <span>[<a href="#RFC8744" class="xref">RFC8744</a>]</span>. See <a href="#dont-stick-out" class="xref">Section 10.8.4</a> for details.<a href="#section-10.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="plaintext-dns">
@@ -2635,16 +2623,48 @@ TCP connections an attacker can open.<a href="#section-10.8.3-1" class="pilcrow"
           <h4 id="name-do-not-stick-out">
 <a href="#section-10.8.4" class="section-number selfRef">10.8.4. </a><a href="#name-do-not-stick-out" class="section-name selfRef">Do Not Stick Out</a>
           </h4>
-<p id="section-10.8.4-1">The only explicit signal indicating possible use of ECH is the ClientHello
-"encrypted_client_hello" extension. Server handshake messages do not contain any
-signal indicating use or negotiation of ECH. Clients MAY GREASE the
-"encrypted_client_hello" extension, as described in <a href="#grease-ech" class="xref">Section 6.2</a>, which helps
-ensure the ecosystem handles ECH correctly. Moreover, as more clients enable ECH
-support, e.g., as normal part of Web browser functionality, with keys supplied
-by shared hosting providers, the presence of ECH extensions becomes less unusual
-and part of typical client behavior. In other words, if all Web browsers start
-using ECH, the presence of this value will not signal unusual behavior to
-passive eavesdroppers.<a href="#section-10.8.4-1" class="pilcrow">¶</a></p>
+<p id="section-10.8.4-1">As a means of reducing the impact of network ossification, <span>[<a href="#RFC8744" class="xref">RFC8744</a>]</span>
+recommends SNI-protection mechanisms be designed in such a way that network
+operators do not differentiate connections using the mechanism from connections
+not using the mechanism. To that end, ECH is designed to resemble a standard
+TLS handshake as much as possible. The most obvious difference is the extension
+itself: as long as middleboxes ignore it, as required by <span>[<a href="#RFC8446" class="xref">RFC8446</a>]</span>, the rest
+of the handshake is designed to look very much as usual.<a href="#section-10.8.4-1" class="pilcrow">¶</a></p>
+<p id="section-10.8.4-2">The GREASE ECH protocol described in <a href="#grease-ech" class="xref">Section 6.2</a> provides a low-risk way to
+evaluate the deployability of ECH. It is designed to mimic the real ECH protocol
+(<a href="#real-ech" class="xref">Section 6.1</a>) without changing the security properties of the handshake. The
+underlying theory is that if GREASE ECH is deployable without triggering
+middlebox misbehavior, and real ECH looks enough like GREASE ECH, then ECH
+should be deployable as well. Thus, our strategy for mitigating network
+ossification is to deploy GREASE ECH widely enough to disincentivize
+differential treatment of the real ECH protocol by the network.<a href="#section-10.8.4-2" class="pilcrow">¶</a></p>
+<p id="section-10.8.4-3">Ensuring that networks do not differentiate between real ECH and GREASE ECH may
+not be feasible for all implementations. While most middleboxes will not treat
+them differently, some operators may wish to block real ECH usage but allow
+GREASE ECH. This specification aims to provide a baseline security level that
+most deployments can achieve easily, while providing implementations enough
+flexibility to achieve stronger security where possible. Minimally, real ECH is
+designed to be indifferentiable from GREASE ECH for passive adversaries with
+following capabilities:
+1. The attacker does not know the ECHConfigList used by the server.
+1. The attacker keeps per-connection state only. In particular, it does not
+   track endpoints across connections.
+1. ECH and GREASE ECH are designed so that the following features do not vary:
+   the code points of extensions negotiated in the clear; the length of
+   messages; and the values of plaintext alert messages.<a href="#section-10.8.4-3" class="pilcrow">¶</a></p>
+<p id="section-10.8.4-4">This leaves a variety of practical differentiators out-of-scope. including,
+though not limited to, the following:
+1. the value of the configuration identifier;
+1. the value of the outer SNI;
+1. use of the "pre_shared_key" extension in the ClientHelloOuter, which is
+   permitted in GREASE ECH but not real ECH; [[TODO: Remove this differentiator
+   if issue #384 is resolved by a spec change.]]
+1. the TLS version negotiated, which may depend on ECH acceptance;
+1. client authentication, which may depend on ECH acceptance; and
+1. HRR issuance, which may depend on ECH acceptance.<a href="#section-10.8.4-4" class="pilcrow">¶</a></p>
+<p id="section-10.8.4-5">These can be addressed with more sophisticated implementations, but some
+mitigations require coordination between the client and server. These
+mitigations are out-of-scope for this specification.<a href="#section-10.8.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="maintain-forward-secrecy">
@@ -3114,8 +3134,8 @@ important ideas and contributions.<a href="#section-appendix.b-1" class="pilcrow
       <h2 id="name-change-log">
 <a href="#section-appendix.c" class="section-number selfRef">Appendix C. </a><a href="#name-change-log" class="section-name selfRef">Change Log</a>
       </h2>
-<ul class="normal ulEmpty">
-<li class="normal ulEmpty" id="section-appendix.c-1.1">
+<ul class="ulEmpty normal">
+<li class="ulEmpty normal" id="section-appendix.c-1.1">
           <strong>RFC Editor's Note:</strong> Please remove this section prior to publication of a
 final version of this document.<a href="#section-appendix.c-1.1" class="pilcrow">¶</a>
 </li>
