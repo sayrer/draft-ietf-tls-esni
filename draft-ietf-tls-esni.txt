@@ -353,6 +353,18 @@ Table of Contents
    public_name  The non-empty name of the client-facing server, i.e.,
       the entity trusted to update the ECH configuration.  This is used
       to correct misconfigured clients, as described in Section 6.1.4.
+      This value MUST NOT begin or end with an ASCII dot and MUST be
+      parsable as a dot-separated sequence of LDH labels, as defined in
+      [RFC5890], Section 2.3.1.  Clients MUST ignore any "ECHConfig"
+      structure whose "public_name" does not meet these criteria.  Note
+      that these criteria are incomplete; they incidentally rule out
+      textual representations of IPv6 addresses (see [RFC3986],
+      Section 3.2.2), but do not exclude IPv4 addresses in standard
+      dotted-decimal or other non-standard notations such as octal and
+      hexadecimal (see [RFC3986], Section 7.4).  If "public_name"
+      contains a literal IPv4 or IPv6 address, the client SHOULD ignore
+      the "ECHConfig" to avoid sending a non-compliant "server_name"
+      extension on the ClientHelloOuter (see [RFC6066], Section 3).
 
    extensions  A list of extensions that the client must take into
       consideration when generating a ClientHello message.  These are
@@ -1776,6 +1788,21 @@ Table of Contents
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://datatracker.ietf.org/doc/html/rfc2119>.
+
+   [RFC3986]  Berners-Lee, T., Fielding, R., and L. Masinter, "Uniform
+              Resource Identifier (URI): Generic Syntax", STD 66,
+              RFC 3986, DOI 10.17487/RFC3986, January 2005,
+              <https://datatracker.ietf.org/doc/html/rfc3986>.
+
+   [RFC5890]  Klensin, J., "Internationalized Domain Names for
+              Applications (IDNA): Definitions and Document Framework",
+              RFC 5890, DOI 10.17487/RFC5890, August 2010,
+              <https://datatracker.ietf.org/doc/html/rfc5890>.
+
+   [RFC6066]  Eastlake 3rd, D., "Transport Layer Security (TLS)
+              Extensions: Extension Definitions", RFC 6066,
+              DOI 10.17487/RFC6066, January 2011,
+              <https://datatracker.ietf.org/doc/html/rfc6066>.
 
    [RFC7685]  Langley, A., "A Transport Layer Security (TLS) ClientHello
               Padding Extension", RFC 7685, DOI 10.17487/RFC7685,
