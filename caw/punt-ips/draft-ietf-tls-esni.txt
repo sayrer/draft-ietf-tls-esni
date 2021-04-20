@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 21 October 2021                                          Fastly
+Expires: 22 October 2021                                          Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                           19 April 2021
+                                                           20 April 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 October 2021.
+   This Internet-Draft will expire on 22 October 2021.
 
 Copyright Notice
 
@@ -424,7 +424,8 @@ Table of Contents
    whose "public_name" payloads contain such addresses.
 
    The value of the "public_name" extension is hereafter referred to as
-   the public identity.  ECHConfig MUST contain this extension.  Future
+   the public identity.  ECHConfig MUST contain this extension, and
+   clients MUST ignore ECHConfigs missing the extension.  Future
    extensions MAY override this rule provided they are marked mandatory
    and provide instructions for how clients use the extension as an
    alternate public identity in validating the client-facing server
@@ -857,11 +858,11 @@ Table of Contents
    calling application.  It MUST NOT treat this as a secure signal to
    disable ECH.
 
-   Otherwise, when the handshake completes successfully with the
-   reference identity authenticated, the client MUST abort the
-   connection with an "ech_required" alert.  The client can then regard
-   ECH as securely disabled by the server.  It SHOULD retry the
-   handshake with a new transport connection and ECH disabled.
+   Otherwise, when the handshake completes successfully with the public
+   identity authenticated, the client MUST abort the connection with an
+   "ech_required" alert.  The client can then regard ECH as securely
+   disabled by the server.  It SHOULD retry the handshake with a new
+   transport connection and ECH disabled.
 
    Clients SHOULD implement a limit on retries caused by
    "ech_retry_request" or servers which do not acknowledge the
@@ -1771,15 +1772,16 @@ Table of Contents
 11.3.  ECHConfig Extension Registry
 
    This document defines a new ECHConfig extension registry that is
-   maintained by IANA.  Values with the first byte in the range 0-253
-   (decimal) are assigned via Specification Required [RFC8126].  Values
-   with the first byte 254 or 255 (decimal) are reserved for Private Use
-   [RFC8126].
+   maintained by IANA.  Values with the first byte in the range 0-126
+   and 128-254 (decimal) are assigned via Specification Required
+   [RFC8126].  Values with the first byte 127 or 255 (decimal) are
+   reserved for Private Use [RFC8126].  An extension is mandatory if the
+   high order bit of the first byte is 1; see Section 4.1 for
+   implications.
 
-   This registry has a "Recommended" and "Mandatory" column.  The
-   registry is initially populated with a single entry for the
-   "public_name" extension with "Recommended" and "Mandatory" values set
-   to "Y" and "Y", respetively.
+   This registry has a single "Recommended" column.  The registry is
+   initially populated with a single entry for the "public_name"
+   extension with "Recommended" value set to "Y".
 
    The "Recommended" column is assigned a value of "N" unless explicitly
    requested, and adding a value with a "Recommended" value of "Y"
