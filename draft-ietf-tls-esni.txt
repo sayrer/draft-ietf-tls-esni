@@ -5,11 +5,11 @@
 tls                                                          E. Rescorla
 Internet-Draft                                                RTFM, Inc.
 Intended status: Standards Track                                  K. Oku
-Expires: 21 October 2021                                          Fastly
+Expires: 24 October 2021                                          Fastly
                                                              N. Sullivan
                                                                C.A. Wood
                                                               Cloudflare
-                                                           19 April 2021
+                                                           22 April 2021
 
 
                        TLS Encrypted Client Hello
@@ -35,7 +35,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 October 2021.
+   This Internet-Draft will expire on 24 October 2021.
 
 Copyright Notice
 
@@ -1131,11 +1131,12 @@ Table of Contents
    not decrypt the second ClientHello's ClientECH.payload value, if
    there is one.
 
-   [[OPEN ISSUE: If the client-facing server implements stateless HRR,
-   it has no way to send a cookie, short of as-yet-unspecified
-   integration with the backend server.  Stateful HRR on the client-
-   facing server works fine, however.  See issue
-   https://github.com/tlswg/draft-ietf-tls-esni/issues/333.]]
+   Note that a client-facing server that forwards the first ClientHello
+   cannot include its own "cookie" extension if the backend server sends
+   a HelloRetryRequest.  This means that the client-facing server either
+   needs to maintain state for such a connection or it needs to
+   coordinate with the backend server to include any information it
+   requires to process the second ClientHello.
 
 7.2.  Backend Server
 
@@ -1766,9 +1767,9 @@ Table of Contents
    [HTTPS-RR] Schwartz, B., Bishop, M., and E. Nygren, "Service binding
               and parameter specification via the DNS (DNS SVCB and
               HTTPS RRs)", Work in Progress, Internet-Draft, draft-ietf-
-              dnsop-svcb-https-04, 17 March 2021,
+              dnsop-svcb-https-05, 21 April 2021,
               <https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-
-              svcb-https-04.txt>.
+              svcb-https-05.txt>.
 
    [I-D.ietf-tls-exported-authenticator]
               Sullivan, N., "Exported Authenticators in TLS", Work in
